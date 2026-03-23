@@ -391,49 +391,36 @@ const Overview = ({ data }) => {
         </button>
       </div>
 
-      {/* Compact Strategic AI Executive Summary (List Format) */}
-      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-5 rounded-3xl shadow-xl mb-8 relative overflow-hidden group border border-white/10 text-white">
-         {/* Subtle Background Decoration */}
-         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/10 transition-colors" />
-         
-         <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
-               <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-md border border-white/10 shadow-lg">
-                  <Activity size={20} className="text-indigo-200" />
-               </div>
-               <div>
-                  <h2 className="text-lg font-black tracking-tight uppercase">Performance Intelligence</h2>
-                  <p className="text-indigo-300 text-[10px] font-black opacity-70 tracking-widest leading-none">AI STRATEGIC SUMMARY • {latestDate}</p>
-               </div>
+      {/* Ultra-Thin Strategic AI Ribbon */}
+      <div className="bg-indigo-900/40 backdrop-blur-md p-3 rounded-2xl shadow-sm mb-6 border border-white/5 relative overflow-hidden group text-white">
+         <div className="relative z-10 flex flex-col md:flex-row items-center gap-4">
+            {/* Minimalist AI Label */}
+            <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-xl border border-white/10 flex-shrink-0">
+               <Activity size={14} className="text-indigo-300" />
+               <span className="text-[10px] font-black uppercase tracking-tighter">AI Insight</span>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-               {/* Left Side: Core Narrative (Compact) */}
-               <div className="lg:col-span-5 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
-                  <h3 className="text-sm font-black text-white mb-2 flex items-center gap-2">
-                     <TrendingUp size={18} className="text-emerald-400" /> Executive Summary
-                  </h3>
-                  <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-90">
-                     ✨ {aiInsights?.overall}
+            {/* Tight Summary + List Grid */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center w-full">
+               {/* Summary (Single Line) */}
+               <div className="lg:col-span-4 pl-1 border-l-2 border-indigo-500/30">
+                  <p className="text-[11px] font-bold text-indigo-100 leading-tight">
+                     ✨ {aiInsights?.overall?.length > 100 ? aiInsights.overall.substring(0, 100) + '...' : aiInsights?.overall}
                   </p>
                </div>
 
-               {/* Right Side: Key Strategic Points (Compact List) */}
-               <div className="lg:col-span-7 flex flex-col justify-center space-y-3">
-                  {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item], i) => (
-                     <div key={key} className="flex items-start gap-3 group/item">
-                        <div className="bg-white/10 p-1.5 rounded-lg border border-white/10 group-hover/item:bg-emerald-500/20 group-hover/item:border-emerald-500/30 transition-all mt-0.5">
-                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
-                        </div>
-                        <div className="flex-1">
-                           <p className="text-white text-sm font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">
-                              <span className="text-indigo-300 text-[9px] font-black uppercase tracking-widest mr-2 opacity-60">{item.label}:</span>
-                              {item.insight}
-                           </p>
-                        </div>
+               {/* 2x2 Tight Highlight Grid */}
+               <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
+                  {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                     <div key={key} className="flex items-center gap-2 truncate">
+                        <div className="w-1 h-1 rounded-full bg-indigo-400 flex-shrink-0" />
+                        <p className="text-[10px] font-bold text-white/90 truncate">
+                           <span className="text-indigo-300/60 uppercase mr-1">{item.label}:</span>
+                           {item.insight}
+                        </p>
                      </div>
                   )) : (
-                     <div className="text-indigo-300 text-xs italic py-2">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์ประเด็นยุทธศาสตร์</div>
+                     <div className="col-span-4 text-[9px] italic opacity-50">No Data</div>
                   )}
                </div>
             </div>

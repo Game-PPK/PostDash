@@ -570,8 +570,8 @@ const CustomerInfo = ({ data }) => {
 
             {/* Top AI Insight Box Removed */}
 
-            {/* Performance Target Compact Box */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Performance Target & Growth Trends Box */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-colors">
                   <div className="flex items-center">
                      <div className="bg-emerald-50 p-3 rounded-2xl mr-4 group-hover:bg-emerald-100 transition-colors">
@@ -597,10 +597,10 @@ const CustomerInfo = ({ data }) => {
                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-colors">
                   <div className="flex items-center">
                      <div className="bg-indigo-50 p-3 rounded-2xl mr-4 group-hover:bg-indigo-100 transition-colors">
-                        <RefreshCw size={20} className="text-indigo-600" />
+                        <TrendingUp size={20} className="text-indigo-600" />
                      </div>
                      <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Growth Trend</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Growth Trend</p>
                         <p className={`text-xl font-black ${lastMonth?.revChange >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
                            {revChangeLabel}
                         </p>
@@ -608,6 +608,24 @@ const CustomerInfo = ({ data }) => {
                   </div>
                   <div className="text-right">
                      <p className="text-sm font-black text-gray-800 uppercase tracking-tighter">Revenue</p>
+                     <p className="text-[10px] text-gray-400 font-bold uppercase">vs Prev Month</p>
+                  </div>
+               </div>
+
+               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-colors">
+                  <div className="flex items-center">
+                     <div className="bg-blue-50 p-3 rounded-2xl mr-4 group-hover:bg-blue-100 transition-colors">
+                        <Activity size={20} className="text-blue-600" />
+                     </div>
+                     <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Growth Trend</p>
+                        <p className={`text-xl font-black ${lastMonth?.volChange >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                           {volChangeLabel}
+                        </p>
+                     </div>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-sm font-black text-gray-800 uppercase tracking-tighter">Volume</p>
                      <p className="text-[10px] text-gray-400 font-bold uppercase">vs Prev Month</p>
                   </div>
                </div>

@@ -568,50 +568,7 @@ const CustomerInfo = ({ data }) => {
                </div>
             </div>
 
-            {/* Narrowed AI Strategic Insight Box (No Snapshot, Vertical Focus) */}
-            <div className="flex justify-start mb-8">
-               <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl max-w-lg w-full relative overflow-hidden group border border-white/10 text-white">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-                  
-                  <div className="relative z-10 text-left">
-                     <div className="flex items-center gap-3 mb-6">
-                        <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-lg">
-                           <Activity size={24} className="text-indigo-200" />
-                        </div>
-                        <div>
-                           <h4 className="text-xl font-black tracking-tight uppercase">AI Data Intelligence</h4>
-                           <p className="text-indigo-300 text-[10px] font-black tracking-widest uppercase opacity-70">Analysis • {filterMonth === 'All' ? 'Latest' : filterMonth}</p>
-                        </div>
-                     </div>
-
-                     <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 backdrop-blur-md">
-                        <h3 className="text-sm font-black text-white mb-2 flex items-center gap-2 uppercase tracking-wider">
-                           <TrendingUp size={18} className="text-emerald-400" /> Executive Narrative
-                        </h3>
-                        <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-90">
-                           ✨ {aiInsights?.overall}
-                        </p>
-                     </div>
-
-                     <div className="space-y-4">
-                        <h3 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-2 pl-1">Key Strategic Highlights</h3>
-                        {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-                           <div key={key} className="flex items-start gap-4 group/item">
-                              <div className="bg-white/10 p-2 rounded-lg border border-white/10 group-hover/item:border-emerald-500/30 transition-all mt-1">
-                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
-                              </div>
-                              <div className="flex-1">
-                                 <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-0.5 opacity-60">{item.label}</p>
-                                 <p className="text-white text-sm font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">{item.insight}</p>
-                              </div>
-                           </div>
-                        )) : (
-                           <div className="text-indigo-300 text-sm italic">No insights available</div>
-                        )}
-                     </div>
-                  </div>
-               </div>
-            </div>
+            {/* Top AI Insight Box Removed */}
 
             {/* Performance Target Compact Box */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -833,6 +790,33 @@ const CustomerInfo = ({ data }) => {
                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-md">{cust.type}</span>
                  <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-md">{cust.customerType}</span>
               </div>
+            </div>
+
+            {/* AI Data Intelligence (Contextual Sidebar Integration) */}
+            <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-5 rounded-3xl shadow-lg relative overflow-hidden group border border-white/10 text-white mb-2 text-left">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl opacity-50" />
+               <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-4">
+                     <Activity size={18} className="text-indigo-200" />
+                     <h4 className="text-sm font-black tracking-tight uppercase leading-none">AI Intelligence</h4>
+                  </div>
+                  
+                  <p className="text-indigo-50 text-[12px] leading-relaxed font-bold italic opacity-95 mb-4 border-l-2 border-emerald-400 pl-3">
+                     ✨ {aiInsights?.overall}
+                  </p>
+
+                  <div className="space-y-3">
+                     {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                        <div key={key} className="flex items-start gap-3">
+                           <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                           <p className="text-white text-[10px] font-bold leading-tight">
+                              <span className="text-indigo-300 text-[8px] font-black uppercase tracking-widest mr-2 opacity-60">{item.label}:</span>
+                              {item.insight}
+                           </p>
+                        </div>
+                     )) : null}
+                  </div>
+               </div>
             </div>
 
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">

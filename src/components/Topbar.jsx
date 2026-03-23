@@ -11,8 +11,16 @@ const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
   ];
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [completedRenewals, setCompletedRenewals] = useState(new Set());
+  const [completedRenewals, setCompletedRenewals] = useState(() => {
+     const saved = localStorage.getItem('postdash_completed_renewals');
+     return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
   const notifRef = useRef(null);
+
+  // Persistence
+  useEffect(() => {
+     localStorage.setItem('postdash_completed_renewals', JSON.stringify(Array.from(completedRenewals)));
+  }, [completedRenewals]);
 
   const { expiringCustomers, currentMonthName } = useMemo(() => {
      if (!data || !data.length) return { expiringCustomers: [], currentMonthName: '' };

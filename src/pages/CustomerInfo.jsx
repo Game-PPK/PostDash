@@ -568,36 +568,46 @@ const CustomerInfo = ({ data }) => {
                </div>
             </div>
 
-            {/* Ultra-Thin Strategic AI Ribbon */}
-            <div className="bg-indigo-900/40 backdrop-blur-md p-3 rounded-2xl shadow-sm mb-6 border border-white/5 relative overflow-hidden group text-white">
-               <div className="relative z-10 flex flex-col md:flex-row items-center gap-4">
-                  {/* Minimalist AI Label */}
-                  <div className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-xl border border-white/10 flex-shrink-0">
-                     <TrendingUp size={14} className="text-indigo-300" />
-                     <span className="text-[10px] font-black uppercase tracking-tighter">AI Data</span>
-                  </div>
+            {/* Compact AI Strategic Insight Box (Fixed Width, Readability Focused) */}
+            <div className="flex justify-start mb-8">
+               <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl max-w-2xl w-full relative overflow-hidden group border border-white/10 text-white">
+                  {/* Background Decoration */}
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+                  
+                  <div className="relative z-10 text-left">
+                     <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-lg">
+                           <TrendingUp size={24} className="text-indigo-200" />
+                        </div>
+                        <div>
+                           <h4 className="text-xl font-black tracking-tight uppercase">AI Data Intelligence</h4>
+                           <p className="text-indigo-300 text-[10px] font-black tracking-widest uppercase opacity-70">Monthly performance analysis • {filterMonth === 'All' ? 'Latest' : filterMonth}</p>
+                        </div>
+                     </div>
 
-                  {/* Tight Summary + List Grid */}
-                  <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center w-full">
-                     {/* Summary (Single Line) */}
-                     <div className="lg:col-span-4 pl-1 border-l-2 border-indigo-500/30">
-                        <p className="text-[11px] font-bold text-indigo-100 leading-tight">
-                           ✨ {aiInsights?.overall?.length > 100 ? aiInsights.overall.substring(0, 100) + '...' : aiInsights?.overall}
+                     <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 backdrop-blur-md">
+                        <h3 className="text-sm font-black text-white mb-2 flex items-center gap-2">
+                           <Activity size={18} className="text-emerald-400" /> Executive Narrative
+                        </h3>
+                        <p className="text-indigo-50 text-base leading-relaxed font-bold italic opacity-90">
+                           ✨ {aiInsights?.overall}
                         </p>
                      </div>
 
-                     {/* 2x2 Tight Highlight Grid */}
-                     <div className="lg:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
+                     <div className="space-y-4">
+                        <h3 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-2 pl-1">Key Strategic Highlights</h3>
                         {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-                           <div key={key} className="flex items-center gap-2 truncate">
-                              <div className="w-1 h-1 rounded-full bg-indigo-400 flex-shrink-0" />
-                              <p className="text-[10px] font-bold text-white/90 truncate">
-                                 <span className="text-indigo-300/60 uppercase mr-1">{item.label}:</span>
-                                 {item.insight}
-                              </p>
+                           <div key={key} className="flex items-start gap-4 group/item">
+                              <div className="bg-white/10 p-2 rounded-lg border border-white/10 group-hover/item:border-emerald-500/30 transition-all mt-1">
+                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-xs font-black text-indigo-300 uppercase tracking-widest mb-0.5 opacity-60">{item.label}</p>
+                                 <p className="text-white text-base font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">{item.insight}</p>
+                              </div>
                            </div>
                         )) : (
-                           <div className="col-span-4 text-[9px] italic opacity-50">No Data</div>
+                           <div className="text-indigo-200 text-sm italic">ไม่มีข้อมูลการวิเคราะห์ในขณะนี้</div>
                         )}
                      </div>
                   </div>

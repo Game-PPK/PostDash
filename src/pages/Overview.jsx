@@ -175,7 +175,6 @@ const Overview = ({ data }) => {
   }, [filteredData]);
 
   const aiInsights = useMemo(() => {
-     // Prepare the current and previous data points
      let current = null;
      let previous = null;
      
@@ -185,12 +184,10 @@ const Overview = ({ data }) => {
         if (sorted.length >= 2) previous = sorted[sorted.length - 2];
      } else {
         const currentIdx = monthsList.indexOf(filterMonth);
-        const currentMonthName = filterMonth;
-        current = trendData.find(d => d.name === currentMonthName);
+        current = trendData.find(d => d.name === filterMonth);
         
-        if (currentIdx > 1) { // 0 is 'All', so 1 is first month
+        if (currentIdx > 1) {
            const prevMonthName = monthsList[currentIdx - 1];
-           // We need to calculate prev month data manually because trendData is filtered
            const prevData = data.filter(r => {
               const mn = r['เดือน'] || r.month;
               if (mn !== prevMonthName) return false;
@@ -213,30 +210,44 @@ const Overview = ({ data }) => {
 
      if (!current) return null;
 
-     const getTrend = (curr, prev) => {
-        if (!prev) return { pct: null, text: 'เปรียบเทียบกับเดือนที่ผ่านมา' };
+     const getInsight = (curr, prev, type) => {
+        if (!prev) return { pct: null, insight: 'ข้อมูลเดือนแรก ยังไม่สามารถวิเคราะห์แนวโน้มได้' };
         const diff = curr - prev;
         const pct = prev !== 0 ? (diff / prev) * 100 : 0;
-        return { 
-           pct: pct.toFixed(1),
-           isUp: pct >= 0,
-           text: pct >= 0 ? `เพิ่มขึ้น ${Math.abs(pct).toFixed(1)}%` : `ลดลง ${Math.abs(pct).toFixed(1)}%`
-        };
+        const isUp = pct >= 0;
+        const absPct = Math.abs(pct).toFixed(1);
+
+        let insight = '';
+        if (type === 'revenue') {
+           if (pct > 5) insight = `เติบโตเด่นชัด (${absPct}%) สัญญาณบวกแข็งแกร่ง`;
+           else if (pct >= 0) insight = `รายได้คงที่ (${absPct}%) รักษามาตรฐานได้ดี`;
+           else if (pct > -5) insight = `ชะลอตัวเล็กน้อย (${absPct}%) ควรจับตามอง`;
+           else insight = `ลดลงอย่างมีนัยสำคัญ (${absPct}%) เร่งตรวจสอบสาเหตุ`;
+        } else if (type === 'volume') {
+           if (pct > 5) insight = `งานเพิ่มขึ้นมาก (${absPct}%) ความต้องการสูงขึ้น`;
+           else if (pct >= 0) insight = `ปริมาณงานคงที่ (${absPct}%) ปกติตามฤดูกาล`;
+           else insight = `งานลดลง (${absPct}%) ระวังลูกค้าลดการส่ง`;
+        } else if (type === 'avg') {
+           if (pct > 2) insight = `มูลค่าต่อชิ้นสูงขึ้น (${absPct}%) ลูกค้าใช้บริการ Premium`;
+           else if (pct < -2) insight = `มูลค่าต่อชิ้นลดลง (${absPct}%) ลูกค้าเน้นราคาประหยัด`;
+           else insight = `มูลค่าต่อชิ้นคงที่ (${absPct}%) โครงสร้างเดิม`;
+        } else if (type === 'cust') {
+           if (pct > 0) insight = `ฐานลูกค้าขยายตัว (${absPct}%) พบลูกค้ากลุ่มใหม่`;
+           else if (pct === 0) insight = `รักษาฐานลูกค้าเดิมได้ครบ (${absPct}%)`;
+           else insight = `สูญเสียลูกค้าบางส่วน (${absPct}%) ควรเร่งรักษาฐาน`;
+        }
+
+        return { pct: pct.toFixed(1), isUp, insight };
      };
 
-     const revTrend = getTrend(current.revenue, previous?.revenue);
-     const volTrend = getTrend(current.volume, previous?.volume);
-     const custTrend = getTrend(current.activeAccounts, previous?.activeAccounts);
-     
      const currAvg = current.volume ? current.revenue / current.volume : 0;
      const prevAvg = previous?.volume ? previous.revenue / previous.volume : 0;
-     const avgTrend = getTrend(currAvg, prevAvg);
 
      return {
-        revenue: { label: 'ภาพรวมรายได้', value: formatCurrency(current.revenue), ...revTrend },
-        volume: { label: 'ภาพรวมชิ้นงาน', value: formatNumber(current.volume) + ' ชิ้น', ...volTrend },
-        avgRev: { label: 'รายได้เฉลี่ย/ชิ้น', value: formatCurrency(currAvg), ...avgTrend },
-        customers: { label: 'จำนวนลูกค้า', value: formatNumber(current.activeAccounts) + ' ราย', ...custTrend }
+        revenue: { label: 'Revenue Insight', value: formatCurrency(current.revenue), ...getInsight(current.revenue, previous?.revenue, 'revenue') },
+        volume: { label: 'Volume Insight', value: formatNumber(current.volume) + ' ชิ้น', ...getInsight(current.volume, previous?.volume, 'volume') },
+        avgRev: { label: 'Effectiveness Insight', value: formatCurrency(currAvg), ...getInsight(currAvg, prevAvg, 'avg') },
+        customers: { label: 'Retention Insight', value: formatNumber(current.activeAccounts) + ' ราย', ...getInsight(current.activeAccounts, previous?.activeAccounts, 'cust') }
      };
   }, [trendData, data, filterMonth, filterProv, filterType, filterBranch, monthsList]);
 
@@ -512,21 +523,21 @@ const Overview = ({ data }) => {
               <span className="bg-indigo-500/50 p-2 rounded-lg mr-3"><Activity size={20} className="text-indigo-100" /></span>
               <h3 className="text-xl font-bold">AI Performance Summary</h3>
            </div>
-           <p className="text-indigo-200 text-sm mb-4">สรุปภาพรวมแยกตามตัวเลือกฟิลเตอร์:</p>
+           <p className="text-indigo-200 text-sm mb-4">วิเคราะห์เชิงลึก (AI-Driven Insights):</p>
            <div className="grid grid-cols-1 gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
               {aiInsights ? Object.entries(aiInsights).map(([key, item]) => (
                  <div key={key} className="bg-indigo-500/20 p-3 rounded-xl border border-indigo-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-transform hover:scale-[1.02]">
                     <div className="flex justify-between items-start mb-1">
-                       <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">{item.label}</span>
+                       <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">{item.label}</span>
                        {item.pct !== null && (
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.isUp ? 'bg-green-500/30 text-green-200' : 'bg-red-500/30 text-red-200'}`}>
-                             {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
-                          </span>
+                          <div className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${item.isUp ? 'bg-emerald-500/30 text-emerald-300' : 'bg-rose-500/30 text-rose-300'}`}>
+                             {item.isUp ? '📈' : '📉'} {Math.abs(item.pct)}%
+                          </div>
                        )}
                     </div>
-                    <div className="flex justify-between items-end">
-                       <span className="text-lg font-bold text-white">{item.value}</span>
-                       <span className="text-[10px] text-indigo-200/70 font-medium italic">{item.text}</span>
+                    <div className="mt-1">
+                       <p className="text-xs font-medium text-white leading-relaxed">{item.insight}</p>
+                       <p className="text-[10px] text-indigo-200/50 mt-1">Value: {item.value}</p>
                     </div>
                  </div>
               )) : (

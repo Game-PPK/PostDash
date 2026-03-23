@@ -580,8 +580,12 @@ const Overview = ({ data }) => {
                   />
                   <Legend iconType="circle" />
                   {selectedTrendMetric === 'revenue' && (trendChartType === 'line' ? 
-                     <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}} /> : 
-                     <Bar dataKey="revenue" name="Revenue" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={40} />
+                     <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}}>
+                        <LabelList dataKey="revenue" position="top" offset={15} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
+                     </Line> : 
+                     <Bar dataKey="revenue" name="Revenue" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={40}>
+                        <LabelList dataKey="revenue" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
+                     </Bar>
                   )}
                   {selectedTrendMetric === 'revenue' && <ReferenceLine y={0} stroke="#e5e7eb" />}
                   

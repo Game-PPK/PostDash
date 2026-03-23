@@ -276,7 +276,24 @@ const CustomerInfo = ({ data }) => {
         qMap[q].revenue += m.revenue;
         qMap[q].volume += m.volume;
      });
-     return Object.values(qMap);
+     const res = Object.values(qMap).sort((a,b) => {
+        const qToNum = {'Q1':1,'Q2':2,'Q3':3,'Q4':4};
+        const partsA = a.name.split(' ');
+        const partsB = b.name.split(' ');
+        return (parseInt(partsA[1])*10 + qToNum[partsA[0]]) - (parseInt(partsB[1])*10 + qToNum[partsB[0]]);
+     });
+
+     for(let i = 0; i < res.length; i++) {
+        if(i > 0) {
+           const prev = res[i-1];
+           const curr = res[i];
+           curr.revChange = prev.revenue ? ((curr.revenue - prev.revenue)/prev.revenue)*100 : 0;
+           curr.volChange = prev.volume ? ((curr.volume - prev.volume)/prev.volume)*100 : 0;
+        } else {
+           res[i].revChange = 0; res[i].volChange = 0;
+        }
+     }
+     return res;
   }, [cust]);
 
   const yearlyData = useMemo(() => {
@@ -288,7 +305,18 @@ const CustomerInfo = ({ data }) => {
         yMap[y].revenue += m.revenue;
         yMap[y].volume += m.volume;
      });
-     return Object.values(yMap);
+     const res = Object.values(yMap).sort((a,b) => parseInt(a.name) - parseInt(b.name));
+     for(let i = 0; i < res.length; i++) {
+        if(i > 0) {
+           const prev = res[i-1];
+           const curr = res[i];
+           curr.revChange = prev.revenue ? ((curr.revenue - prev.revenue)/prev.revenue)*100 : 0;
+           curr.volChange = prev.volume ? ((curr.volume - prev.volume)/prev.volume)*100 : 0;
+        } else {
+           res[i].revChange = 0; res[i].volChange = 0;
+        }
+     }
+     return res;
   }, [cust]);
 
   const aiInsights = useMemo(() => {
@@ -704,7 +732,39 @@ const CustomerInfo = ({ data }) => {
                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} tick={{fill: '#9ca3af', fontSize: 12}} />
                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tickFormatter={(val) => `${formatNumberCompact(val)}`} tick={{fill: '#9ca3af', fontSize: 12}} />
-                       <Tooltip formatter={(value, name) => [name === 'Revenue' || name === 'revenue' ? formatCurrency(value) : formatNumberFull(value), name]} cursor={{fill: '#f9fafb'}}/>
+                       <Tooltip 
+                          content={({ active, payload, label }) => {
+                             if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                   <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 min-w-[180px]">
+                                      <p className="font-bold text-gray-800 mb-2 border-b pb-1">{label}</p>
+                                      <div className="space-y-2">
+                                         <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">Rev</span>
+                                            <div className="text-right">
+                                               <p className="text-xs font-black text-indigo-600">{formatCurrency(data.revenue)}</p>
+                                               <p className={`text-[9px] font-bold ${data.revChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                  {data.revChange >= 0 ? '▲' : '▼'} {Math.abs(data.revChange).toFixed(1)}%
+                                               </p>
+                                            </div>
+                                         </div>
+                                         <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">Vol</span>
+                                            <div className="text-right">
+                                               <p className="text-xs font-black text-emerald-600">{formatNumberFull(data.volume)}</p>
+                                               <p className={`text-[9px] font-bold ${data.volChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                  {data.volChange >= 0 ? '▲' : '▼'} {Math.abs(data.volChange).toFixed(1)}%
+                                               </p>
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </div>
+                                );
+                             }
+                             return null;
+                          }}
+                        />
                        <Legend />
                        <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={20} />
                        <Bar yAxisId="right" dataKey="volume" name="Volume" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={20} />
@@ -722,7 +782,39 @@ const CustomerInfo = ({ data }) => {
                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tickFormatter={(val) => `${val/1000}k`} tick={{fill: '#9ca3af', fontSize: 12}} />
                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tickFormatter={(val) => `${formatNumberCompact(val)}`} tick={{fill: '#9ca3af', fontSize: 12}} />
-                       <Tooltip formatter={(value, name) => [name === 'Revenue' || name === 'revenue' ? formatCurrency(value) : formatNumberFull(value), name]} cursor={{fill: '#f9fafb'}}/>
+                       <Tooltip 
+                          content={({ active, payload, label }) => {
+                             if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                   <div className="bg-white p-4 rounded-xl shadow-lg border border-gray-100 min-w-[180px]">
+                                      <p className="font-bold text-gray-800 mb-2 border-b pb-1">{label}</p>
+                                      <div className="space-y-2">
+                                         <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">Rev</span>
+                                            <div className="text-right">
+                                               <p className="text-xs font-black text-indigo-600">{formatCurrency(data.revenue)}</p>
+                                               <p className={`text-[9px] font-bold ${data.revChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                  {data.revChange >= 0 ? '▲' : '▼'} {Math.abs(data.revChange).toFixed(1)}%
+                                               </p>
+                                            </div>
+                                         </div>
+                                         <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase">Vol</span>
+                                            <div className="text-right">
+                                               <p className="text-xs font-black text-emerald-600">{formatNumberFull(data.volume)}</p>
+                                               <p className={`text-[9px] font-bold ${data.volChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                                                  {data.volChange >= 0 ? '▲' : '▼'} {Math.abs(data.volChange).toFixed(1)}%
+                                               </p>
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </div>
+                                );
+                             }
+                             return null;
+                          }}
+                        />
                        <Legend />
                        <Bar yAxisId="left" dataKey="revenue" name="Revenue" fill="#8884d8" radius={[4, 4, 0, 0]} barSize={30} />
                        <Bar yAxisId="right" dataKey="volume" name="Volume" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={30} />

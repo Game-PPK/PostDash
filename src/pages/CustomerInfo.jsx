@@ -12,6 +12,12 @@ const CustomerInfo = ({ data }) => {
   const pageRef = useRef(null);
   const chartRef = useRef(null);
 
+  // Utility formatters
+  const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val || 0);
+  const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val || 0);
+  const formatNumberFull = (val) => new Intl.NumberFormat('th-TH').format(val || 0);
+
+
   const { customers, provinces, allBranchesParsed, branchProvMap, allCustTypes, allContractEnds } = useMemo(() => {
     const custMap = {};
     const provSet = new Set();
@@ -340,9 +346,7 @@ const CustomerInfo = ({ data }) => {
     };
  }, [cust, targetCriteria]);
 
-  const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
-  const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val);
-  const formatNumberFull = (val) => new Intl.NumberFormat('th-TH').format(val);
+
 
   const captureFullPage = () => {
     if (pageRef.current === null) return;

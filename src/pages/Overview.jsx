@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart
+  PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart, ReferenceLine
 } from 'recharts';
 import { TrendingUp, Users, Package, DollarSign, Activity, Filter, RefreshCw, Download } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';

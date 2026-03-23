@@ -269,29 +269,63 @@ const CustomerInfo = ({ data }) => {
   }, [cust]);
 
   const aiInsights = useMemo(() => {
-     if (!cust || !cust.monthlyDataArr || cust.monthlyDataArr.length === 0) return ["ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์", "โปรดเลือกลูกค้าเพื่อดูคำแนะนำ"];
-     const history = cust.monthlyDataArr;
-     const last = history[history.length - 1];
-     const prev = history.length > 1 ? history[history.length - 2] : null;
-     
-     let text = "ภาพรวมผลประกอบการยังคงที่";
-     if (prev && prev.revenue > 0) {
-        if (last.revenue > prev.revenue) text = `⭐ ยอดเยี่ยม! รายได้เดือนล่าสุดเพิ่มขึ้น ${(((last.revenue - prev.revenue)/prev.revenue)*100).toFixed(1)}% เทียบกับเดือนก่อนหน้า`;
-        else text = `⚠️ ข้อควรระวัง: รายได้เดือนล่าสุดลดลง ${(((prev.revenue - last.revenue)/prev.revenue)*100).toFixed(1)}% เทียบกับเดือนก่อนหน้า ควรติดตามสอบถาม`;
-     }
+    if (!cust || !cust.monthlyDataArr || cust.monthlyDataArr.length === 0) return null;
+    
+    const history = cust.monthlyDataArr;
+    const current = history[history.length - 1];
+    const previous = history.length > 1 ? history[history.length - 2] : null;
 
-     const insight2 = targetCriteria && last.volume >= targetCriteria 
-        ? `🏆 ลูกค้ารายนี้ทำยอดปริมาณงานทะลุเกณฑ์ที่กำหนดในเดือนล่าสุด`
-        : targetCriteria 
-        ? `📉 เฝ้าระวัง: ลูกค้ารายนี้ทำยอดชิ้นงานไม่ถึงเกณฑ์ที่กำหนดในเดือนล่าสุด`
-        : `💡 รักษาความสัมพันธ์อันดีกับลูกค้ารายนี้อย่างต่อเนื่อง เพื่อให้เกิดการใช้บริการสม่ำเสมอ`;
+    const getInsight = (curr, prev, type) => {
+       if (!prev) return { pct: null, insight: 'ข้อมูลเดือนแรก ยังไม่สามารถวิเคราะห์แนวโน้มได้' };
+       const diff = curr - prev;
+       const pct = prev !== 0 ? (diff / prev) * 100 : 0;
+       const isUp = pct >= 0;
+       const absPct = Math.abs(pct).toFixed(1);
 
-     return [
-        text,
-        insight2,
-        `📈 ปัจจุบันลูกค้ามีรายได้เฉลี่ยต่อชิ้นงานอยู่ที่ ${new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(avgRev || 0)}`
-     ];
-  }, [cust, targetCriteria, avgRev]);
+       let insight = '';
+       if (type === 'revenue') {
+          if (pct > 10) insight = `รายได้เติบโตอย่างก้าวกระโดด (${absPct}%) เป็นลูกค้าระดับ High-Performance`;
+          else if (pct >= 0) insight = `รักษายอดรายได้ได้มั่นคง (${absPct}%) มีความสม่ำเสมอในการใช้บริการ`;
+          else if (pct > -10) insight = `ยอดส่งลดลงเล็กน้อย (${absPct}%) ควรสอบถามความพึงพอใจเพิ่มเติม`;
+          else insight = `รายได้ตกฮวบ (${absPct}%) มีความเสี่ยงที่จะย้ายค่ายหรือเลิกใช้บริการ`;
+       } else if (type === 'volume') {
+          if (pct > 10) insight = `ปริมาณงานเพิ่มขึ้นชัดเจน (${absPct}%) สะท้อนความเชื่อมั่นในบริการ`;
+          else if (pct >= 0) insight = `จำนวนชิ้นงานคงที่ (${absPct}%) เป็นไปตามเกณฑ์ปกติ`;
+          else insight = `จำนวนชิ้นงานลดลง (${absPct}%) ระวังการสูญเสีย Market Share ในลูกค้ารายนี้`;
+       } else if (type === 'avg') {
+          if (pct > 2) insight = `ใช้บริการกลุ่มที่แพงขึ้น (${absPct}%) มีแนวโน้ม Upsell สำเร็จ`;
+          else if (pct < -2) insight = `เน้นใช้บริการราคาประหยัดมากขึ้น (${absPct}%)`;
+          else insight = `พฤติกรรมการเลือกบริการยังคงเดิม (${absPct}%)`;
+       }
+
+       return { pct: pct.toFixed(1), isUp, insight };
+    };
+
+    const currAvg = current.volume ? current.revenue / current.volume : 0;
+    const prevAvg = previous?.volume ? previous.revenue / previous.volume : 0;
+
+    const rev = getInsight(current.revenue, previous?.revenue, 'revenue');
+    const vol = getInsight(current.volume, previous?.volume, 'volume');
+    const eff = getInsight(currAvg, prevAvg, 'avg');
+
+    let overall = "";
+    if (!previous) {
+       overall = "สรุปภาพรวม: ลูกค้ารายนี้เพิ่งเริ่มมีข้อมูลบันทึกในระบบ ยังไม่สามารถเปรียบเทียบแนวโน้มได้ แต่สถานะปัจจุบันถือว่ามีการเริ่มต้นใช้งานที่ดี";
+    } else {
+       overall = "วิเคราะห์เฉพาะราย: ";
+       if (rev.isUp && vol.isUp) overall += `ลูกค้ารายนี้มีการใช้งานเพิ่มขึ้นอย่างมีนัยสำคัญทั้งรายได้และจำนวนงาน ${eff.isUp ? 'และมีการขยับไปใช้บริการระดับที่สูงขึ้นอีกด้วย' : 'เน้นการส่งปริมาณมากในบริการเดิม'}`;
+       else if (rev.isUp && !vol.isUp) overall += `สามารถรีดรายได้จากลูกค้ารายนี้ได้เพิ่มขึ้นแม้จำนวนชิ้นจะลดลง แสดงถึงการ Upsell ที่มีประสิทธิภาพ`;
+       else if (!rev.isUp && vol.isUp) overall += `ลูกค้าส่งงานเยอะขึ้นแต่รายได้ลดลง สะท้อนพฤติกรรมการเปลี่ยนไปใช้บริการกลุ่มประหยัด (Economy) หรือได้รับส่วนลดพิเศษ`;
+       else overall += `สังเกตพบสัญญาณลบทั้งด้านรายได้และจำนวนชิ้นงาน ${targetCriteria && current.volume < targetCriteria ? 'และปัจจุบันยอดต่ำกว่าเกณฑ์ที่กำหนด' : ''} ควรพิจารณาติดต่อเพื่อทำกิจกรรมรักษาลูกค้า (Retention)`;
+    }
+
+    return {
+       overall,
+       revenue: { label: 'Revenue Growth', value: formatCurrency(current.revenue), ...rev },
+       volume: { label: 'Volume Trend', value: formatNumberFull(current.volume) + ' pcs', ...vol },
+       avgRev: { label: 'Efficiency Index', value: formatCurrency(currAvg), ...eff }
+    };
+ }, [cust, targetCriteria]);
 
   const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
   const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val);
@@ -431,70 +465,100 @@ const CustomerInfo = ({ data }) => {
         )}
 
         {cust && (
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center"><TrendingUp size={18} className="mr-2"/> Business Summary</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-[#fcdab7] p-4 rounded-2xl relative overflow-hidden group hover:shadow-md transition-shadow flex flex-col justify-between">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-medium text-black/70 text-xs">Total Revenue</span>
-                  <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center"><ArrowUpRight size={12} className="text-black/70"/></div>
-                </div>
-                <div>
-                   <p className="text-xl font-bold text-[#3d2c1d] mb-1 leading-none">{formatCurrency(cust.totalRev)}</p>
-                   <p className={`text-[10px] font-bold ${lastMonth?.revChange >= 0 ? 'text-green-800' : 'text-red-800'}`}>{revChangeLabel} YoY</p>
-                </div>
-              </div>
-
-              <div className="bg-[#a2c8f9] p-4 rounded-2xl relative overflow-hidden group hover:shadow-md transition-shadow flex flex-col justify-between">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="font-medium text-black/70 text-xs">Total Volume</span>
-                  <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center"><Package size={12} className="text-black/70"/></div>
-                </div>
-                <div>
-                   <p className="text-xl font-bold text-[#1f304a] mb-1 leading-none">{formatNumberFull(cust.totalVol)} pcs</p>
-                   <p className={`text-[10px] font-bold ${lastMonth?.volChange >= 0 ? 'text-green-800' : 'text-red-800'}`}>{volChangeLabel} YoY</p>
-                </div>
-              </div>
-
-              <div className="bg-[#fbb1a9] p-4 rounded-2xl relative overflow-hidden group hover:shadow-md transition-shadow flex flex-col justify-between">
-                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-medium text-black/70 text-xs">Avg Rev/Piece</span>
-                  <div className="w-6 h-6 rounded-full bg-black/10 flex items-center justify-center"><TrendingDown size={12} className="text-black/70"/></div>
-                </div>
-                <div>
-                   <p className="text-xl font-bold text-[#4a211e] mb-1 leading-none">{formatCurrency(avgRev)}</p>
-                   <p className="text-[10px] text-black/60">Across all services</p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-gray-200 shadow-sm p-4 rounded-2xl relative overflow-hidden group hover:shadow-md transition-shadow flex flex-col justify-between">
-                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-medium text-gray-500 text-xs">Performance Target</span>
-                  <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center"><Calendar size={12} className="text-indigo-600"/></div>
-                </div>
-                <div>
-                   <p className={`text-xl font-bold mb-1 leading-none ${targetCriteria ? 'text-indigo-600' : 'text-gray-300'}`}>
-                      {targetCriteria ? formatNumberFull(targetCriteria) : 'No Criteria'}
-                   </p>
-                   <p className="text-[10px] text-gray-500">Volume Goal</p>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center"><Activity size={20} className="mr-2 text-indigo-600"/> Executive Summary</h3>
             
-            {/* AI Custom Insights */}
-            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-5 rounded-2xl shadow-sm text-white flex flex-col mt-4">
-               <div className="flex items-center mb-4">
-                  <span className="bg-indigo-500/50 p-2 rounded-lg mr-3"><Activity size={20} className="text-indigo-100" /></span>
-                  <h3 className="text-lg font-bold">AI Performance Summary (Customer Insight)</h3>
+            <div className="bg-gradient-to-br from-indigo-700 to-slate-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
+               {/* Decorative background element */}
+               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/10 transition-colors"></div>
+               
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative z-10">
+                  <div className="flex items-center mb-4 md:mb-0">
+                     <div className="bg-indigo-500/30 p-3 rounded-2xl mr-4 backdrop-blur-md border border-white/10">
+                        <TrendingUp size={24} className="text-indigo-100" />
+                     </div>
+                     <div>
+                        <h4 className="text-lg font-bold">AI Data Intelligence</h4>
+                        <p className="text-indigo-200/70 text-sm">Monthly performance narrative</p>
+                     </div>
+                  </div>
+                  <div className="flex gap-2">
+                     <span className="bg-emerald-500/20 text-emerald-300 text-[11px] font-black px-3 py-1 rounded-full border border-emerald-500/30 tracking-widest uppercase">Live Analysis</span>
+                  </div>
                </div>
-               <p className="text-indigo-200 text-sm mb-3">ข้อมูลเชิงลึกเฉพาะลูกค้า:</p>
-               <ul className="space-y-3">
-                  {aiInsights.map((text, idx) => (
-                     <li key={idx} className="bg-indigo-500/20 p-3 rounded-xl border border-indigo-400/30 text-sm leading-relaxed shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-                        {text}
-                     </li>
-                  ))}
-               </ul>
+
+               {aiInsights?.overall && (
+                  <div className="bg-white/10 p-5 rounded-2xl border border-white/5 mb-8 backdrop-blur-lg shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
+                     <p className="text-base font-medium text-white leading-relaxed tracking-wide">
+                        ✨ {aiInsights.overall}
+                     </p>
+                  </div>
+               )}
+
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                  {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                     <div key={key} className="bg-white/5 p-4 rounded-2xl border border-white/10 transition-all hover:bg-white/10 hover:-translate-y-1">
+                        <div className="flex justify-between items-start mb-2">
+                           <span className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em]">{item.label}</span>
+                           {item.pct !== null && (
+                              <div className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
+                                 {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
+                              </div>
+                           )}
+                        </div>
+                        <p className="text-sm font-semibold text-white mb-2 leading-snug">{item.insight}</p>
+                        <div className="pt-2 border-t border-white/5 flex justify-between items-baseline">
+                           <span className="text-lg font-black text-white">{item.value}</span>
+                           <span className="text-[10px] text-white/40 italic">Current Value</span>
+                        </div>
+                     </div>
+                  )) : (
+                     <div className="col-span-3 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์เชิงลึก</div>
+                  )}
+               </div>
+            </div>
+
+            {/* Performance Target Compact Box */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-colors">
+                  <div className="flex items-center">
+                     <div className="bg-emerald-50 p-3 rounded-2xl mr-4 group-hover:bg-emerald-100 transition-colors">
+                        <Package size={20} className="text-emerald-600" />
+                     </div>
+                     <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Performance Target</p>
+                        <p className={`text-xl font-black ${targetCriteria ? 'text-gray-800' : 'text-gray-300'}`}>
+                           {targetCriteria ? formatNumberFull(targetCriteria) : 'Not Definded'}
+                        </p>
+                     </div>
+                  </div>
+                  {targetCriteria && lastMonth && (
+                     <div className="text-right">
+                        <p className={`text-sm font-black ${lastMonth.volume >= targetCriteria ? 'text-emerald-600' : 'text-rose-500'}`}>
+                           {((lastMonth.volume / targetCriteria) * 100).toFixed(0)}%
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Completion</p>
+                     </div>
+                  )}
+               </div>
+               
+               <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-colors">
+                  <div className="flex items-center">
+                     <div className="bg-indigo-50 p-3 rounded-2xl mr-4 group-hover:bg-indigo-100 transition-colors">
+                        <RefreshCw size={20} className="text-indigo-600" />
+                     </div>
+                     <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Growth Trend</p>
+                        <p className={`text-xl font-black ${lastMonth?.revChange >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                           {revChangeLabel}
+                        </p>
+                     </div>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-sm font-black text-gray-800 uppercase tracking-tighter">Revenue</p>
+                     <p className="text-[10px] text-gray-400 font-bold uppercase">vs Prev Month</p>
+                  </div>
+               </div>
             </div>
           </div>
         )}

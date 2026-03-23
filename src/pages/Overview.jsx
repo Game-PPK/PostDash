@@ -175,20 +175,70 @@ const Overview = ({ data }) => {
   }, [filteredData]);
 
   const aiInsights = useMemo(() => {
-     if (!trendData.length) return ["ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์", "โปรดปรับตัวกรองเพื่อดูคำแนะนำ"];
-     const last = trendData[trendData.length - 1];
-     const prev = trendData.length > 1 ? trendData[trendData.length - 2] : null;
-     let text = "ภาพรวมผลประกอบการคงที่";
-     if (prev && prev.revenue > 0) {
-        if (last.revenue > prev.revenue) text = `⭐ เติบโตได้ดี! รายได้เพิ่มขึ้น ${(((last.revenue - prev.revenue)/prev.revenue)*100).toFixed(1)}% เทียบกับเดือนก่อนหน้า`;
-        else text = `⚠️ ข้อควรระวัง: รายได้ลดลง ${(((prev.revenue - last.revenue)/prev.revenue)*100).toFixed(1)}% เทียบกับเดือนก่อนหน้า`;
+     // Prepare the current and previous data points
+     let current = null;
+     let previous = null;
+     
+     if (filterMonth === 'All') {
+        const sorted = trendData;
+        if (sorted.length >= 1) current = sorted[sorted.length - 1];
+        if (sorted.length >= 2) previous = sorted[sorted.length - 2];
+     } else {
+        const currentIdx = monthsList.indexOf(filterMonth);
+        const currentMonthName = filterMonth;
+        current = trendData.find(d => d.name === currentMonthName);
+        
+        if (currentIdx > 1) { // 0 is 'All', so 1 is first month
+           const prevMonthName = monthsList[currentIdx - 1];
+           // We need to calculate prev month data manually because trendData is filtered
+           const prevData = data.filter(r => {
+              const mn = r['เดือน'] || r.month;
+              if (mn !== prevMonthName) return false;
+              if (filterProv !== 'All' && r['จังหวัด'] !== filterProv) return false;
+              if (filterType !== 'All' && r['ประเภทบริการ'] !== filterType) return false;
+              const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+              if (filterBranch !== 'All' && b !== filterBranch) return false;
+              return true;
+           });
+           
+           let pRev = 0; let pVol = 0; let pAccSet = new Set();
+           prevData.forEach(r => {
+              pRev += parseFloat(r['รายได้']) || 0;
+              pVol += parseInt(r['ชิ้นงาน']) || 0;
+              if (r['ชื่อบัญชี']) pAccSet.add(r['ชื่อบัญชี']);
+           });
+           previous = { revenue: pRev, volume: pVol, activeAccounts: pAccSet.size };
+        }
      }
-     return [
-        text,
-        `💡 บริการในประเทศคิดเป็น ${summary.domesticShare.toFixed(1)}% ของรายได้ทั้งหมด - พิจารณาเพิ่มยอดขายบริการระหว่างประเทศเพื่อลดการพึ่งพาตลาดเดียว`,
-        `📈 ปัจจุบันมีรายได้เฉลี่ยต่อชิ้นงานอยู่ที่ ${formatCurrency(summary.avgRev || 0)}`
-     ];
-  }, [trendData, summary]);
+
+     if (!current) return null;
+
+     const getTrend = (curr, prev) => {
+        if (!prev) return { pct: null, text: 'เปรียบเทียบกับเดือนที่ผ่านมา' };
+        const diff = curr - prev;
+        const pct = prev !== 0 ? (diff / prev) * 100 : 0;
+        return { 
+           pct: pct.toFixed(1),
+           isUp: pct >= 0,
+           text: pct >= 0 ? `เพิ่มขึ้น ${Math.abs(pct).toFixed(1)}%` : `ลดลง ${Math.abs(pct).toFixed(1)}%`
+        };
+     };
+
+     const revTrend = getTrend(current.revenue, previous?.revenue);
+     const volTrend = getTrend(current.volume, previous?.volume);
+     const custTrend = getTrend(current.activeAccounts, previous?.activeAccounts);
+     
+     const currAvg = current.volume ? current.revenue / current.volume : 0;
+     const prevAvg = previous?.volume ? previous.revenue / previous.volume : 0;
+     const avgTrend = getTrend(currAvg, prevAvg);
+
+     return {
+        revenue: { label: 'ภาพรวมรายได้', value: formatCurrency(current.revenue), ...revTrend },
+        volume: { label: 'ภาพรวมชิ้นงาน', value: formatNumber(current.volume) + ' ชิ้น', ...volTrend },
+        avgRev: { label: 'รายได้เฉลี่ย/ชิ้น', value: formatCurrency(currAvg), ...avgTrend },
+        customers: { label: 'จำนวนลูกค้า', value: formatNumber(current.activeAccounts) + ' ราย', ...custTrend }
+     };
+  }, [trendData, data, filterMonth, filterProv, filterType, filterBranch, monthsList]);
 
   const rawProvData = useMemo(() => {
     const provinceMap = {};
@@ -462,14 +512,27 @@ const Overview = ({ data }) => {
               <span className="bg-indigo-500/50 p-2 rounded-lg mr-3"><Activity size={20} className="text-indigo-100" /></span>
               <h3 className="text-xl font-bold">AI Performance Summary</h3>
            </div>
-           <p className="text-indigo-200 text-sm mb-4">Insights based on current filter selection:</p>
-           <ul className="space-y-4 flex-1">
-              {aiInsights.map((text, idx) => (
-                 <li key={idx} className="bg-indigo-500/20 p-3 rounded-xl border border-indigo-400/30 text-sm leading-relaxed shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]">
-                    {text}
-                 </li>
-              ))}
-           </ul>
+           <p className="text-indigo-200 text-sm mb-4">สรุปภาพรวมแยกตามตัวเลือกฟิลเตอร์:</p>
+           <div className="grid grid-cols-1 gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+              {aiInsights ? Object.entries(aiInsights).map(([key, item]) => (
+                 <div key={key} className="bg-indigo-500/20 p-3 rounded-xl border border-indigo-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-transform hover:scale-[1.02]">
+                    <div className="flex justify-between items-start mb-1">
+                       <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">{item.label}</span>
+                       {item.pct !== null && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.isUp ? 'bg-green-500/30 text-green-200' : 'bg-red-500/30 text-red-200'}`}>
+                             {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
+                          </span>
+                       )}
+                    </div>
+                    <div className="flex justify-between items-end">
+                       <span className="text-lg font-bold text-white">{item.value}</span>
+                       <span className="text-[10px] text-indigo-200/70 font-medium italic">{item.text}</span>
+                    </div>
+                 </div>
+              )) : (
+                 <div className="text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div>
+              )}
+           </div>
         </div>
       </div>
 

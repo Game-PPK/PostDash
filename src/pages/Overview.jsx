@@ -489,26 +489,26 @@ const Overview = ({ data }) => {
                      </div>
                   </div>
 
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 mb-6 backdrop-blur-md text-left">
-                     <p className="text-indigo-50 text-[13px] leading-relaxed font-bold italic opacity-95">
+                  <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 backdrop-blur-md text-left">
+                     <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-95">
                         ✨ {aiInsights?.overall}
                      </p>
                   </div>
 
-                  <div className="space-y-3 text-left">
-                     <h3 className="text-[9px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-1 pl-1">Key Contextual Highlights</h3>
+                  <div className="space-y-4 text-left">
+                     <h3 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-1 pl-1">Key Contextual Highlights</h3>
                      {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-                        <div key={key} className="flex items-start gap-3 group/item">
-                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0 group-hover/item:bg-emerald-400 transition-colors" />
+                        <div key={key} className="flex items-start gap-4 group/item">
+                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0 group-hover/item:bg-emerald-400 transition-colors" />
                            <div className="flex-1">
-                              <p className="text-white text-[11px] font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">
-                                 <span className="text-indigo-300 text-[8px] font-black uppercase tracking-widest mr-2 opacity-60">{item.label}:</span>
+                              <p className="text-white text-sm font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">
+                                 <span className="text-indigo-300 text-[9px] font-black uppercase tracking-widest mr-2 opacity-60 block mb-0.5">{item.label}</span>
                                  {item.insight}
                               </p>
                            </div>
                         </div>
                      )) : (
-                        <div className="text-indigo-300 text-[10px] italic">No insights available</div>
+                        <div className="text-indigo-300 text-sm italic">No insights available</div>
                      )}
                   </div>
                </div>

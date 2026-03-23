@@ -801,16 +801,16 @@ const CustomerInfo = ({ data }) => {
                      <h4 className="text-sm font-black tracking-tight uppercase leading-none">AI Intelligence</h4>
                   </div>
                   
-                  <p className="text-indigo-50 text-[12px] leading-relaxed font-bold italic opacity-95 mb-4 border-l-2 border-emerald-400 pl-3">
+                  <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-95 mb-5 border-l-2 border-emerald-400 pl-4">
                      ✨ {aiInsights?.overall}
                   </p>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                      {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
                         <div key={key} className="flex items-start gap-3">
-                           <div className="w-1 h-1 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
-                           <p className="text-white text-[10px] font-bold leading-tight">
-                              <span className="text-indigo-300 text-[8px] font-black uppercase tracking-widest mr-2 opacity-60">{item.label}:</span>
+                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+                           <p className="text-white text-[13px] font-bold leading-snug">
+                              <span className="text-indigo-300 text-[9px] font-black uppercase tracking-widest mr-2 opacity-60 block mb-0.5">{item.label}</span>
                               {item.insight}
                            </p>
                         </div>

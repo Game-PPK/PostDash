@@ -391,48 +391,49 @@ const Overview = ({ data }) => {
         </button>
       </div>
 
-      {/* Strategic AI Executive Summary (List Format) */}
-      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-8 rounded-3xl shadow-xl mb-8 relative overflow-hidden group border border-white/10 text-white">
-         {/* Background Decoration */}
-         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/10 transition-colors" />
+      {/* Compact Strategic AI Executive Summary (List Format) */}
+      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-5 rounded-3xl shadow-xl mb-8 relative overflow-hidden group border border-white/10 text-white">
+         {/* Subtle Background Decoration */}
+         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/10 transition-colors" />
          
          <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-8">
-               <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
-                  <Activity size={32} className="text-indigo-200" />
+            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-white/5">
+               <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur-md border border-white/10 shadow-lg">
+                  <Activity size={20} className="text-indigo-200" />
                </div>
                <div>
-                  <h2 className="text-2xl font-black tracking-tight uppercase">Performance Intelligence</h2>
-                  <p className="text-indigo-300 text-sm font-bold opacity-80 italic">AI-Driven Strategic Insights • {latestDate}</p>
+                  <h2 className="text-lg font-black tracking-tight uppercase">Performance Intelligence</h2>
+                  <p className="text-indigo-300 text-[10px] font-black opacity-70 tracking-widest leading-none">AI STRATEGIC SUMMARY • {latestDate}</p>
                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-               {/* Left Side: Core Narrative */}
-               <div className="lg:col-span-5 bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-md shadow-inner">
-                  <h3 className="text-lg font-black text-white mb-3 flex items-center gap-2">
-                     <TrendingUp size={24} className="text-emerald-400" /> Executive Summary
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+               {/* Left Side: Core Narrative (Compact) */}
+               <div className="lg:col-span-5 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
+                  <h3 className="text-sm font-black text-white mb-2 flex items-center gap-2">
+                     <TrendingUp size={18} className="text-emerald-400" /> Executive Summary
                   </h3>
-                  <p className="text-indigo-50 text-base leading-relaxed font-bold italic opacity-90">
+                  <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-90">
                      ✨ {aiInsights?.overall}
                   </p>
                </div>
 
-               {/* Right Side: Key Strategic Points */}
-               <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
-                  <h3 className="text-xs font-black text-indigo-300 uppercase tracking-widest pl-1 mb-2">Key Analytical Highlights</h3>
+               {/* Right Side: Key Strategic Points (Compact List) */}
+               <div className="lg:col-span-7 flex flex-col justify-center space-y-3">
                   {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item], i) => (
-                     <div key={key} className="flex items-start gap-4 group/item">
-                        <div className="bg-white/10 p-2 rounded-lg border border-white/10 shadow-sm group-hover/item:bg-emerald-500/20 group-hover/item:border-emerald-500/30 transition-all mt-1">
-                           <div className="w-2 h-2 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
+                     <div key={key} className="flex items-start gap-3 group/item">
+                        <div className="bg-white/10 p-1.5 rounded-lg border border-white/10 group-hover/item:bg-emerald-500/20 group-hover/item:border-emerald-500/30 transition-all mt-0.5">
+                           <div className="w-1.5 h-1.5 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
                         </div>
                         <div className="flex-1">
-                           <p className="text-indigo-200 text-[10px] font-black uppercase tracking-widest mb-0.5 opacity-60 group-hover/item:opacity-100 transition-opacity">{item.label}</p>
-                           <p className="text-white text-base font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">{item.insight}</p>
+                           <p className="text-white text-sm font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">
+                              <span className="text-indigo-300 text-[9px] font-black uppercase tracking-widest mr-2 opacity-60">{item.label}:</span>
+                              {item.insight}
+                           </p>
                         </div>
                      </div>
                   )) : (
-                     <div className="text-indigo-300 text-sm italic py-4">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์ประเด็นยุทธศาสตร์</div>
+                     <div className="text-indigo-300 text-xs italic py-2">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์ประเด็นยุทธศาสตร์</div>
                   )}
                </div>
             </div>

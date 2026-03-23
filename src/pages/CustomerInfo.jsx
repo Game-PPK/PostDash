@@ -568,23 +568,60 @@ const CustomerInfo = ({ data }) => {
                </div>
             </div>
 
-            {/* Ultra-Compact AI Insight Bar */}
-            {aiInsights?.overall && (
-               <div className="bg-gradient-to-r from-indigo-700 to-slate-900 p-4 rounded-3xl shadow-lg border border-white/10 overflow-hidden relative group text-white mb-4">
-                  <div className="absolute top-0 right-0 w-64 h-full bg-white/5 -skew-x-12 -mr-16 group-hover:bg-white/10 transition-colors"></div>
-                  <div className="relative z-10 flex items-center gap-4">
-                     <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/10 shadow-sm flex-shrink-0">
-                        <TrendingUp size={18} className="text-indigo-200" />
+            {/* Premium AI Data Intelligence Section */}
+            <div className="bg-gradient-to-br from-indigo-700 to-slate-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group border border-white/10 mb-8">
+               {/* Decorative background element */}
+               <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/10 transition-colors"></div>
+               <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full -ml-32 -mb-32 blur-3xl group-hover:bg-indigo-500/20 transition-colors"></div>
+               
+               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative z-10 gap-4">
+                  <div className="flex items-center">
+                     <div className="bg-white/10 p-4 rounded-2xl mr-4 backdrop-blur-md border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
+                        <TrendingUp size={32} className="text-indigo-100" />
                      </div>
-                     <div className="flex-1">
-                        <p className="text-sm font-medium leading-relaxed">
-                           <span className="text-indigo-300 font-black uppercase text-[10px] tracking-widest mr-2 border-r border-white/20 pr-2">AI Data Intelligence</span>
-                           ✨ {aiInsights.overall}
-                        </p>
+                     <div>
+                        <h4 className="text-2xl font-black tracking-tight uppercase">AI Data Intelligence</h4>
+                        <p className="text-indigo-200/70 text-sm font-bold opacity-80">Monthly performance analysis • {filterMonth === 'All' ? 'Latest' : filterMonth}</p>
                      </div>
                   </div>
+                  <div className="flex gap-2">
+                     <span className="bg-emerald-500/20 text-emerald-300 text-[11px] font-black px-3 py-1 rounded-full border border-emerald-500/30 tracking-widest uppercase">Live Analysis</span>
+                  </div>
                </div>
-            )}
+
+               {aiInsights?.overall && (
+                  <div className="bg-white/5 p-6 rounded-2xl border border-white/5 mb-8 backdrop-blur-lg shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group-hover:bg-white/10 transition-colors">
+                     <p className="text-lg font-black text-white mb-2 flex items-center gap-2">
+                        <Activity size={24} className="text-emerald-400" /> Executive Summary
+                     </p>
+                     <p className="text-base font-bold text-indigo-100 leading-relaxed tracking-wide">
+                        ✨ {aiInsights.overall}
+                     </p>
+                  </div>
+               )}
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
+                  {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                     <div key={key} className="bg-white/5 p-5 rounded-2xl border border-white/10 transition-all hover:bg-white/10 hover:-translate-y-1 group/item">
+                        <div className="flex justify-between items-start mb-4">
+                           <span className="text-xs font-black text-indigo-300 uppercase tracking-widest group-hover/item:text-white transition-colors">{item.label}</span>
+                           {item.pct !== null && (
+                              <div className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
+                                 {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
+                              </div>
+                           )}
+                        </div>
+                        <p className="text-sm font-bold text-white mb-4 leading-relaxed opacity-90">{item.insight}</p>
+                        <div className="pt-2 border-t border-white/5 flex justify-between items-baseline">
+                           <span className="text-2xl font-black text-white">{item.value}</span>
+                           <span className="text-[10px] text-white/40 font-bold uppercase italic">Current</span>
+                        </div>
+                     </div>
+                  )) : (
+                     <div className="col-span-4 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์เชิงลึก</div>
+                  )}
+               </div>
+            </div>
 
             {/* Performance Target Compact Box */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

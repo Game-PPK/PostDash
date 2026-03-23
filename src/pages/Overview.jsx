@@ -391,23 +391,62 @@ const Overview = ({ data }) => {
         </button>
       </div>
 
-      {/* Ultra-Compact AI Insight Bar */}
-      {aiInsights?.overall && (
-         <div className="bg-gradient-to-r from-indigo-700 to-slate-900 p-4 rounded-3xl shadow-lg border border-white/10 overflow-hidden relative group text-white mb-8">
-            <div className="absolute top-0 right-0 w-64 h-full bg-white/5 -skew-x-12 -mr-16 group-hover:bg-white/10 transition-colors"></div>
-            <div className="relative z-10 flex items-center gap-4">
-               <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/10 shadow-sm flex-shrink-0">
-                  <Activity size={18} className="text-indigo-200" />
+      {/* Premium AI High-Level Insight Section */}
+      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-8 rounded-3xl shadow-xl mb-8 relative overflow-hidden group border border-white/10 text-white">
+         {/* Abstract Background Elements */}
+         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/10 transition-colors" />
+         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full -ml-32 -mb-32 blur-3xl group-hover:bg-indigo-500/20 transition-colors" />
+
+         <div className="relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+               <div className="flex items-center gap-4">
+                  <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
+                     <Activity size={32} className="text-indigo-200" />
+                  </div>
+                  <div>
+                     <h2 className="text-2xl font-black tracking-tight uppercase">Performance Intelligence</h2>
+                     <p className="text-indigo-300 text-sm font-bold opacity-80">AI-Driven Core Business Analysis • {latestDate}</p>
+                  </div>
                </div>
-               <div className="flex-1">
-                  <p className="text-sm font-medium leading-relaxed">
-                     <span className="text-indigo-300 font-black uppercase text-[10px] tracking-widest mr-2 border-r border-white/20 pr-2">AI Performance Insight</span>
-                     ✨ {aiInsights.overall}
-                  </p>
-               </div>
+               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-3 py-1 rounded-full border border-emerald-500/30 tracking-widest uppercase">Live Analysis</span>
+            </div>
+
+            {/* Overall Banner Summary */}
+            {aiInsights?.overall && (
+              <div className="bg-white/5 rounded-2xl p-6 mb-6 backdrop-blur-md border border-white/10 shadow-inner group-hover:bg-white/10 transition-colors">
+                 <p className="text-white font-black text-lg mb-2 flex items-center gap-2">
+                    <TrendingUp size={24} className="text-emerald-400" /> Executive Summary
+                 </p>
+                 <p className="text-indigo-100 text-base leading-relaxed font-bold">
+                    ✨ {aiInsights.overall}
+                 </p>
+              </div>
+            )}
+
+            {/* Enhanced Dashboard Cards for AI Segment */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+               {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                  <div key={key} className="bg-white/5 hover:bg-white/10 p-5 rounded-2xl border border-white/5 transition-all group/card shadow-lg backdrop-blur-sm">
+                     <div className="flex justify-between items-start mb-4">
+                        <span className="text-xs font-black uppercase tracking-widest text-indigo-300">{item.label}</span>
+                        {item.pct !== null && (
+                           <div className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
+                              {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
+                           </div>
+                        )}
+                     </div>
+                     <p className="text-sm font-bold text-white mb-4 leading-relaxed opacity-90">{item.insight}</p>
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-baseline">
+                        <span className="text-2xl font-black text-white">{item.value}</span>
+                        <span className="text-[10px] text-white/40 font-bold uppercase italic">Current</span>
+                     </div>
+                  </div>
+               )) : (
+                  <div className="col-span-4 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div>
+               )}
             </div>
          </div>
-      )}
+      </div>
 
 
 

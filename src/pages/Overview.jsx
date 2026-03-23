@@ -391,56 +391,23 @@ const Overview = ({ data }) => {
         </button>
       </div>
 
-      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl border border-white/10 overflow-hidden relative group text-white mb-8">
-         {/* Decorative bg */}
-         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
-
-         <div className="relative z-10 flex flex-col lg:flex-row gap-6">
-            {/* Narrative Summary Side (Left) */}
-            <div className="lg:w-1/2 border-b lg:border-b-0 lg:border-r border-white/10 pb-6 lg:pb-0 lg:pr-6">
-               <div className="flex items-center mb-6">
-                  <div className="bg-indigo-500/30 p-2.5 rounded-2xl mr-3 backdrop-blur-md border border-white/10 shadow-lg">
-                     <Activity size={20} className="text-indigo-100" />
-                  </div>
-                  <div>
-                     <h3 className="text-lg font-bold text-white leading-tight">Performance Intelligence</h3>
-                     <p className="text-[10px] text-indigo-200/70 font-black uppercase tracking-widest leading-tight">AI Overall Analysis</p>
-                  </div>
+      {/* Ultra-Compact AI Insight Bar */}
+      {aiInsights?.overall && (
+         <div className="bg-gradient-to-r from-indigo-700 to-slate-900 p-4 rounded-3xl shadow-lg border border-white/10 overflow-hidden relative group text-white mb-8">
+            <div className="absolute top-0 right-0 w-64 h-full bg-white/5 -skew-x-12 -mr-16 group-hover:bg-white/10 transition-colors"></div>
+            <div className="relative z-10 flex items-center gap-4">
+               <div className="bg-white/10 p-2 rounded-xl backdrop-blur-md border border-white/10 shadow-sm flex-shrink-0">
+                  <Activity size={18} className="text-indigo-200" />
                </div>
-
-               {aiInsights?.overall && (
-                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-lg">
-                     <p className="text-sm font-medium text-indigo-50 leading-relaxed italic">
-                        ✨ {aiInsights.overall}
-                     </p>
-                  </div>
-               )}
-            </div>
-
-            {/* Metrics Grid (Right) */}
-            <div className="lg:w-1/2 grid grid-cols-2 gap-3">
-               {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-                  <div key={key} className="bg-white/5 p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
-                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-[9px] font-black text-indigo-300 uppercase tracking-widest">{item.label}</span>
-                        {item.pct !== null && (
-                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
-                              {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
-                           </span>
-                        )}
-                     </div>
-                     <p className="text-xs font-bold text-white mb-2 leading-tight opacity-90">{item.insight}</p>
-                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
-                        <span className="text-base font-black text-white leading-none">{item.value}</span>
-                        <span className="text-[8px] text-white/30 font-bold uppercase">Current</span>
-                     </div>
-                  </div>
-               )) : (
-                  <div className="col-span-2 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div>
-               )}
+               <div className="flex-1">
+                  <p className="text-sm font-medium leading-relaxed">
+                     <span className="text-indigo-300 font-black uppercase text-[10px] tracking-widest mr-2 border-r border-white/20 pr-2">AI Performance Insight</span>
+                     ✨ {aiInsights.overall}
+                  </p>
+               </div>
             </div>
          </div>
-      </div>
+      )}
 
 
 

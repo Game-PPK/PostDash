@@ -25,6 +25,7 @@ const Overview = ({ data }) => {
 
   const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val);
   const formatNumber = (val) => new Intl.NumberFormat('th-TH').format(val);
+  const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val || 0);
 
   const handleResetFilters = () => {
     setFilterProv('All');

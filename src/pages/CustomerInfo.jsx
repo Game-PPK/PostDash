@@ -864,11 +864,20 @@ const CustomerInfo = ({ data }) => {
               <div className="h-48 w-full">
                 <ResponsiveContainer>
                   <PieChart>
-                    <Pie data={servicePieData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} fill="#8884d8" paddingAngle={4} dataKey="value" stroke="none">
+                    <Pie 
+                      data={servicePieData} 
+                      cx="50%" cy="50%" 
+                      innerRadius={40} outerRadius={65} 
+                      fill="#8884d8" 
+                      paddingAngle={4} 
+                      dataKey="value" 
+                      stroke="none"
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                    >
                       {servicePieData.map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip formatter={(val) => formatCurrency(val)} />
-                    <Legend layout="vertical" verticalAlign="middle" align="right" iconType="circle" wrapperStyle={{fontSize: "12px"}}/>
+                    <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{fontSize: "10px", paddingTop: "20px"}}/>
                   </PieChart>
                 </ResponsiveContainer>
               </div>

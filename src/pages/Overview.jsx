@@ -243,11 +243,30 @@ const Overview = ({ data }) => {
      const currAvg = current.volume ? current.revenue / current.volume : 0;
      const prevAvg = previous?.volume ? previous.revenue / previous.volume : 0;
 
+     const rev = getInsight(current.revenue, previous?.revenue, 'revenue');
+     const vol = getInsight(current.volume, previous?.volume, 'volume');
+     const eff = getInsight(currAvg, prevAvg, 'avg');
+     const ret = getInsight(current.activeAccounts, previous?.activeAccounts, 'cust');
+
+     let overall = "";
+     if (!previous) {
+        overall = "สรุปภาพรวม: ข้อมูลเริ่มต้นเดือนแรก ยังไม่สามารถเปรียบเทียบแนวโน้มย้อนหลังได้ อย่างไรก็ตามประสิทธิภาพในปัจจุบันถือเป็นฐานที่ดีสำหรับการติดตามผลในเดือนถัดไป";
+     } else {
+        overall = "สรุปภาพรวม: ";
+        if (rev.isUp && vol.isUp) overall += `เดือนนี้เป็นช่วงขาขึ้นที่ชัดเจน ทั้งรายได้และปริมาณงานเติบโตควบคู่กัน ${ret.isUp ? 'ยอดเยี่ยมที่มีการขยายฐานลูกค้าเพิ่มขึ้นด้วย' : 'เน้นการเติบโตจากกลุ่มลูกค้าเดิมเป็นหลัก'}`;
+        else if (rev.isUp && !vol.isUp) overall += `รายได้ประคองตัวได้ดีแม้ปริมาณงานจะลดลงเฉลี่ย แสดงให้เห็นว่าสามารถรักษากลุ่มลูกค้าที่มีมูลค่าสูงได้สำเร็จ`;
+        else if (!rev.isUp && vol.isUp) overall += `ปริมาณงานเพิ่มขึ้นแต่รายได้กลับลดลง สะท้อนถึงการใช้บริการในกลุ่มราคาประหยัดที่มากขึ้น หรือสัดส่วนกำไรต่อชิ้นงานเริ่มลดลง`;
+        else overall += `ภาพรวมมีการชะลอตัวลง ทั้งในด้านรายได้และปริมาณงาน ควรเร่งตรวจสอบสาเหตุและจัดกิจกรรมส่งเสริมการขายเพื่อกระตุ้นยอดในเดือนถัดไป`;
+        
+        if (eff.isUp && rev.isUp) overall += " เสริมด้วยกลยุทธ์การเน้นบริการมูลค่าสูงที่เริ่มเห็นผลลัพธ์ที่น่าพอใจ";
+     }
+
      return {
-        revenue: { label: 'Revenue Insight', value: formatCurrency(current.revenue), ...getInsight(current.revenue, previous?.revenue, 'revenue') },
-        volume: { label: 'Volume Insight', value: formatNumber(current.volume) + ' ชิ้น', ...getInsight(current.volume, previous?.volume, 'volume') },
-        avgRev: { label: 'Effectiveness Insight', value: formatCurrency(currAvg), ...getInsight(currAvg, prevAvg, 'avg') },
-        customers: { label: 'Retention Insight', value: formatNumber(current.activeAccounts) + ' ราย', ...getInsight(current.activeAccounts, previous?.activeAccounts, 'cust') }
+        overall,
+        revenue: { label: 'Revenue Insight', value: formatCurrency(current.revenue), ...rev },
+        volume: { label: 'Volume Insight', value: formatNumber(current.volume) + ' ชิ้น', ...vol },
+        avgRev: { label: 'Effectiveness Insight', value: formatCurrency(currAvg), ...eff },
+        customers: { label: 'Retention Insight', value: formatNumber(current.activeAccounts) + ' ราย', ...ret }
      };
   }, [trendData, data, filterMonth, filterProv, filterType, filterBranch, monthsList]);
 
@@ -524,8 +543,15 @@ const Overview = ({ data }) => {
               <h3 className="text-xl font-bold">AI Performance Summary</h3>
            </div>
            <p className="text-indigo-200 text-sm mb-4">วิเคราะห์เชิงลึก (AI-Driven Insights):</p>
+           {aiInsights?.overall && (
+              <div className="bg-white/10 p-4 rounded-xl border border-white/10 mb-4 backdrop-blur-sm shadow-inner">
+                 <p className="text-sm font-medium text-white leading-relaxed tracking-wide">
+                    ✨ {aiInsights.overall}
+                 </p>
+              </div>
+           )}
            <div className="grid grid-cols-1 gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar">
-              {aiInsights ? Object.entries(aiInsights).map(([key, item]) => (
+              {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
                  <div key={key} className="bg-indigo-500/20 p-3 rounded-xl border border-indigo-400/30 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] transition-transform hover:scale-[1.02]">
                     <div className="flex justify-between items-start mb-1">
                        <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest">{item.label}</span>

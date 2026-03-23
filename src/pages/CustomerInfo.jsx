@@ -630,15 +630,15 @@ const CustomerInfo = ({ data }) => {
                      
                      <div className="grid grid-cols-2 gap-4 flex-1">
                         {[
-                           { label: 'Revenue', value: (customerKPIs?.monthlyRevenue || 0), icon: '฿' },
-                           { label: 'Volume', value: (customerKPIs?.monthlyVolume || 0), icon: '📦' },
-                           { label: 'Growth', value: (customerKPIs?.revenueGrowth || 0) + '%', icon: '📈' },
-                           { label: 'Services', value: (customerKPIs?.distinctServices || 0), icon: '🛠️' }
+                           { label: 'Revenue', value: aiInsights?.revenue?.value || '฿0', icon: '฿' },
+                           { label: 'Volume', value: aiInsights?.volume?.value || '0 pcs', icon: '📦' },
+                           { label: 'Growth', value: (aiInsights?.revenue?.pct || 0) + '%', icon: '📈' },
+                           { label: 'Services', value: Object.keys(cust?.services || {}).length, icon: '🛠️' }
                         ].map((item, idx) => (
                            <div key={idx} className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-center">
                               <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">{item.label}</p>
                               <p className="text-slate-800 text-sm font-black tracking-tight">
-                                 {typeof item.value === 'number' && item.label !== 'Growth' ? item.value.toLocaleString() : item.value}
+                                 {item.value}
                               </p>
                            </div>
                         ))}

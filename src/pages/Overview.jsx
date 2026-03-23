@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart, ReferenceLine
 } from 'recharts';
-import { TrendingUp, Users, Package, DollarSign, Activity, Filter, RefreshCw, Download } from 'lucide-react';
+import { TrendingUp, Users, Package, DollarSign, Activity, Filter, RefreshCw, Download, PieChart as PieIcon } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 
 // Common colors for charts
@@ -23,8 +23,8 @@ const Overview = ({ data }) => {
   const [trendChartType, setTrendChartType] = useState('line');
   const dashboardRef = useRef(null);
 
-  const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val);
-  const formatNumber = (val) => new Intl.NumberFormat('th-TH').format(val);
+  const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val || 0);
+  const formatNumber = (val) => new Intl.NumberFormat('th-TH').format(val || 0);
   const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val || 0);
 
   const handleResetFilters = () => {
@@ -447,16 +447,16 @@ const Overview = ({ data }) => {
                <div className="flex items-center justify-between mb-6">
                   <h3 className="text-slate-800 text-sm font-black uppercase tracking-widest">Snapshot</h3>
                   <div className="p-2 bg-indigo-50 rounded-xl">
-                     <PieChart size={18} className="text-indigo-600" />
+                     <PieIcon size={18} className="text-indigo-600" />
                   </div>
                </div>
                
                <div className="grid grid-cols-2 gap-4 flex-1">
                   {[
-                     { label: 'Revenue', value: stats.totalRevenue, icon: '฿', color: 'indigo' },
-                     { label: 'Volume', value: stats.totalVolume, icon: '📦', color: 'emerald' },
-                     { label: 'Avg/Rev', value: stats.avgRevPerPiece, icon: '📊', color: 'amber' },
-                     { label: 'Share', value: stats.domesticShare + '%', icon: '🌍', color: 'rose' }
+                     { label: 'Revenue', value: summary.totalRev, icon: '฿', color: 'indigo' },
+                     { label: 'Volume', value: summary.totalVol, icon: '📦', color: 'emerald' },
+                     { label: 'Avg/Rev', value: summary.avgRev, icon: '📊', color: 'amber' },
+                     { label: 'Share', value: summary.domesticShare?.toFixed(1) + '%', icon: '🌍', color: 'rose' }
                   ].map((item, idx) => (
                      <div key={idx} className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-center">
                         <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">{item.label}</p>

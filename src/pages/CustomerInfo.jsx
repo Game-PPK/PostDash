@@ -194,14 +194,25 @@ const CustomerInfo = ({ data }) => {
      return agg;
   }, [filteredCustomers, selectedCustNames, filterProv, filterBranch]);
 
-  const avgRev = cust && cust.totalVol ? cust.totalRev / cust.totalVol : 0;
-  
+  // 1. Core Derived Data (No dependencies)
+  const targetCriteria = useMemo(() => {
+     if(!cust || !cust.volumeCriteria || cust.volumeCriteria === '-') return null;
+     const str = String(cust.volumeCriteria).replace(/,/g, '');
+     const match = str.match(/\d+/);
+     if (!match) return null;
+     const parsed = parseInt(match[0], 10);
+     return isNaN(parsed) || parsed === 0 ? null : parsed;
+  }, [cust]);
+
   const chartData = cust ? cust.monthlyDataArr : [];
   const lastMonth = chartData.length > 0 ? chartData[chartData.length - 1] : null;
-  const revChangeLabel = lastMonth?.revChange ? `${lastMonth.revChange > 0 ? '+' : ''}${lastMonth.revChange.toFixed(1)}% YoY` : 'N/A';
-  const volChangeLabel = lastMonth?.volChange ? `${lastMonth.volChange > 0 ? '+' : ''}${lastMonth.volChange.toFixed(1)}% YoY` : 'N/A';
+
+  // 2. Secondary Derived Data (Depends on core data)
+  const avgRev = cust && cust.totalVol ? cust.totalRev / cust.totalVol : 0;
   
-  // Warnings
+  const revChangeLabel = lastMonth?.revChange ? `${lastMonth.revChange > 0 ? '+' : ''}${lastMonth.revChange.toFixed(1)}%` : '0%';
+  const volChangeLabel = lastMonth?.volChange ? `${lastMonth.volChange > 0 ? '+' : ''}${lastMonth.volChange.toFixed(1)}%` : '0%';
+  
   const warnings = useMemo(() => {
     if (!cust || !cust.monthlyDataArr || cust.monthlyDataArr.length === 0) return [];
     const alerts = [];
@@ -223,18 +234,20 @@ const CustomerInfo = ({ data }) => {
         alerts.push(`สัญญานเตือนเร่งด่วน: รายได้มีแนวโน้มลดลงติดต่อกันมาเป็นเวลา 3 เดือนแล้ว`);
       }
     }
-    return alerts;
-  }, [cust]);
 
-  // Target Criteria
-  const targetCriteria = useMemo(() => {
-     if(!cust || !cust.volumeCriteria || cust.volumeCriteria === '-') return null;
-     const str = String(cust.volumeCriteria).replace(/,/g, '');
-     const match = str.match(/\d+/);
-     if (!match) return null;
-     const parsed = parseInt(match[0], 10);
-     return isNaN(parsed) || parsed === 0 ? null : parsed;
-  }, [cust]);
+    if (targetCriteria && lastMonth) {
+       if (lastMonth.volume < targetCriteria) {
+          alerts.push(`ปริมาณงานปัจจุบัน (${lastMonth.volume.toLocaleString()}) ยังไม่ถึงเกณฑ์เป้าหมาย (${targetCriteria.toLocaleString()})`);
+       }
+    }
+
+    if (cust.membership === 'Customer') {
+       alerts.push(`ลูกค้ายังไม่ได้เป็นสมาชิก Post Family (แนะนำให้ชวนสมัครเพื่อรักษาฐานลูกค้า)`);
+    }
+    
+    return alerts;
+  }, [cust, targetCriteria, lastMonth]);
+
 
   // Derived Donut Chart Data
   const servicePieData = useMemo(() => {

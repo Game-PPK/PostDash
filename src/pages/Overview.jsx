@@ -391,56 +391,54 @@ const Overview = ({ data }) => {
         </button>
       </div>
 
-      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-8 rounded-3xl shadow-xl border border-white/5 overflow-hidden relative group text-white">
-         {/* Decorative background element */}
-         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/10 transition-all duration-700"></div>
+      <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl border border-white/10 overflow-hidden relative group text-white mb-8">
+         {/* Decorative bg */}
+         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
 
-         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative z-10">
-            <div className="flex items-center mb-4 md:mb-0">
-               <div className="bg-indigo-500/30 p-3 rounded-2xl mr-4 backdrop-blur-md border border-white/10 shadow-lg shadow-indigo-900/20">
-                  <Activity size={24} className="text-indigo-100" />
-               </div>
-               <div>
-                  <h3 className="text-xl font-bold text-white">Performance Intelligence</h3>
-                  <p className="text-sm text-indigo-200/70">AI-driven business analysis and trend forecasting</p>
-               </div>
-            </div>
-            <div className="flex gap-2">
-               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-3 py-1 rounded-full border border-emerald-500/30 tracking-widest uppercase">Live Analysis</span>
-            </div>
-         </div>
-
-         {aiInsights?.overall && (
-            <div className="bg-white/10 p-5 rounded-2xl border border-white/5 mb-8 backdrop-blur-lg shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] relative z-10">
-               <div className="absolute top-0 right-0 p-4 opacity-5">
-                  <TrendingUp size={48} className="text-white" />
-               </div>
-               <p className="text-base font-medium text-white leading-relaxed max-w-4xl relative z-10">
-                  ✨ {aiInsights.overall}
-               </p>
-            </div>
-         )}
-
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
-            {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-               <div key={key} className="bg-white/5 p-4 rounded-2xl border border-white/10 transition-all hover:bg-white/10 hover:shadow-xl hover:-translate-y-1 group/item">
-                  <div className="flex justify-between items-start mb-3">
-                     <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest group-hover/item:text-white transition-colors">{item.label}</span>
-                     {item.pct !== null && (
-                        <div className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
-                           {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
-                        </div>
-                     )}
+         <div className="relative z-10 flex flex-col lg:flex-row gap-6">
+            {/* Narrative Summary Side (Left) */}
+            <div className="lg:w-1/2 border-b lg:border-b-0 lg:border-r border-white/10 pb-6 lg:pb-0 lg:pr-6">
+               <div className="flex items-center mb-6">
+                  <div className="bg-indigo-500/30 p-2.5 rounded-2xl mr-3 backdrop-blur-md border border-white/10 shadow-lg">
+                     <Activity size={20} className="text-indigo-100" />
                   </div>
-                  <p className="text-sm font-bold text-white mb-3 leading-snug">{item.insight}</p>
-                  <div className="pt-2 border-t border-white/5 flex justify-between items-baseline">
-                     <span className="text-lg font-black text-white">{item.value}</span>
-                     <span className="text-[10px] text-white/40 font-bold uppercase italic">Current</span>
+                  <div>
+                     <h3 className="text-lg font-bold text-white leading-tight">Performance Intelligence</h3>
+                     <p className="text-[10px] text-indigo-200/70 font-black uppercase tracking-widest leading-tight">AI Overall Analysis</p>
                   </div>
                </div>
-            )) : (
-               <div className="col-span-4 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div>
-            )}
+
+               {aiInsights?.overall && (
+                  <div className="bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-lg">
+                     <p className="text-sm font-medium text-indigo-50 leading-relaxed italic">
+                        ✨ {aiInsights.overall}
+                     </p>
+                  </div>
+               )}
+            </div>
+
+            {/* Metrics Grid (Right) */}
+            <div className="lg:w-1/2 grid grid-cols-2 gap-3">
+               {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                  <div key={key} className="bg-white/5 p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
+                     <div className="flex justify-between items-center mb-2">
+                        <span className="text-[9px] font-black text-indigo-300 uppercase tracking-widest">{item.label}</span>
+                        {item.pct !== null && (
+                           <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
+                              {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
+                           </span>
+                        )}
+                     </div>
+                     <p className="text-xs font-bold text-white mb-2 leading-tight opacity-90">{item.insight}</p>
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                        <span className="text-base font-black text-white leading-none">{item.value}</span>
+                        <span className="text-[8px] text-white/30 font-bold uppercase">Current</span>
+                     </div>
+                  </div>
+               )) : (
+                  <div className="col-span-2 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div>
+               )}
+            </div>
          </div>
       </div>
 

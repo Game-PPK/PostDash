@@ -613,7 +613,7 @@ const Overview = ({ data }) => {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} />
                 <XAxis type="number" tickFormatter={(val) => `${val / 1000}k`} />
                 <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value, name) => [name === 'revenue' ? formatCurrency(value) : formatNumber(value), name === 'revenue' ? 'Revenue' : 'Volume']} />
+                <Tooltip formatter={(value, name) => [name === 'Revenue' ? formatCurrency(value) : formatNumber(value), name]} />
                 <Legend />
                 <Bar dataKey="revenue" name="Revenue" fill="#8884d8" radius={[0, 4, 4, 0]} barSize={12} />
                 <Bar dataKey="volume" name="Volume" fill="#82ca9d" radius={[0, 4, 4, 0]} barSize={12} />

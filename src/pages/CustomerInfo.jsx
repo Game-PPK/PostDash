@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { MapPin, Calendar, ArrowUpRight, TrendingDown, Package, TrendingUp, Download, Camera, RefreshCw, AlertTriangle, Info, Activity } from 'lucide-react';
+import { MapPin, Calendar, ArrowUpRight, TrendingDown, Package, TrendingUp, Download, Camera, RefreshCw, AlertTriangle, Info, Activity, DollarSign } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import Select from 'react-select';
 
@@ -483,7 +483,41 @@ const CustomerInfo = ({ data }) => {
 
         {cust && (
           <div className="space-y-6">
+            {/* Quick Totals KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-orange-200 transition-colors">
+                  <div className="bg-orange-50 p-4 rounded-2xl mr-5 group-hover:bg-orange-100 transition-colors">
+                     <DollarSign size={24} className="text-orange-600" />
+                  </div>
+                  <div>
+                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Revenue</p>
+                     <p className="text-2xl font-black text-gray-800">{formatCurrency(cust.totalRev)}</p>
+                  </div>
+               </div>
+
+               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-blue-200 transition-colors">
+                  <div className="bg-blue-50 p-4 rounded-2xl mr-5 group-hover:bg-blue-100 transition-colors">
+                     <Package size={24} className="text-blue-600" />
+                  </div>
+                  <div>
+                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Volume</p>
+                     <p className="text-2xl font-black text-gray-800">{formatNumberFull(cust.totalVol)} pcs</p>
+                  </div>
+               </div>
+
+               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-rose-200 transition-colors">
+                  <div className="bg-rose-50 p-4 rounded-2xl mr-5 group-hover:bg-rose-100 transition-colors">
+                     <Activity size={24} className="text-rose-600" />
+                  </div>
+                  <div>
+                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Avg Revenue / Piece</p>
+                     <p className="text-2xl font-black text-gray-800">{formatCurrency(cust.totalVol > 0 ? cust.totalRev / cust.totalVol : 0)}</p>
+                  </div>
+               </div>
+            </div>
+
             <h3 className="text-xl font-bold text-gray-800 flex items-center"><Activity size={20} className="mr-2 text-indigo-600"/> Executive Summary</h3>
+
             
             <div className="bg-gradient-to-br from-indigo-700 to-slate-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
                {/* Decorative background element */}

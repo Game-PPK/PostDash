@@ -391,59 +391,50 @@ const Overview = ({ data }) => {
         </button>
       </div>
 
-      {/* Premium AI High-Level Insight Section */}
+      {/* Strategic AI Executive Summary (List Format) */}
       <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-8 rounded-3xl shadow-xl mb-8 relative overflow-hidden group border border-white/10 text-white">
-         {/* Abstract Background Elements */}
+         {/* Background Decoration */}
          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/10 transition-colors" />
-         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full -ml-32 -mb-32 blur-3xl group-hover:bg-indigo-500/20 transition-colors" />
-
+         
          <div className="relative z-10">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-               <div className="flex items-center gap-4">
-                  <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
-                     <Activity size={32} className="text-indigo-200" />
-                  </div>
-                  <div>
-                     <h2 className="text-2xl font-black tracking-tight uppercase">Performance Intelligence</h2>
-                     <p className="text-indigo-300 text-sm font-bold opacity-80">AI-Driven Core Business Analysis • {latestDate}</p>
-                  </div>
+            <div className="flex items-center gap-4 mb-8">
+               <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/10 shadow-lg">
+                  <Activity size={32} className="text-indigo-200" />
                </div>
-               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-3 py-1 rounded-full border border-emerald-500/30 tracking-widest uppercase">Live Analysis</span>
+               <div>
+                  <h2 className="text-2xl font-black tracking-tight uppercase">Performance Intelligence</h2>
+                  <p className="text-indigo-300 text-sm font-bold opacity-80 italic">AI-Driven Strategic Insights • {latestDate}</p>
+               </div>
             </div>
 
-            {/* Overall Banner Summary */}
-            {aiInsights?.overall && (
-              <div className="bg-white/5 rounded-2xl p-6 mb-6 backdrop-blur-md border border-white/10 shadow-inner group-hover:bg-white/10 transition-colors">
-                 <p className="text-white font-black text-lg mb-2 flex items-center gap-2">
-                    <TrendingUp size={24} className="text-emerald-400" /> Executive Summary
-                 </p>
-                 <p className="text-indigo-100 text-base leading-relaxed font-bold">
-                    ✨ {aiInsights.overall}
-                 </p>
-              </div>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+               {/* Left Side: Core Narrative */}
+               <div className="lg:col-span-5 bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-md shadow-inner">
+                  <h3 className="text-lg font-black text-white mb-3 flex items-center gap-2">
+                     <TrendingUp size={24} className="text-emerald-400" /> Executive Summary
+                  </h3>
+                  <p className="text-indigo-50 text-base leading-relaxed font-bold italic opacity-90">
+                     ✨ {aiInsights?.overall}
+                  </p>
+               </div>
 
-            {/* Enhanced Dashboard Cards for AI Segment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-               {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-                  <div key={key} className="bg-white/5 hover:bg-white/10 p-5 rounded-2xl border border-white/5 transition-all group/card shadow-lg backdrop-blur-sm">
-                     <div className="flex justify-between items-start mb-4">
-                        <span className="text-xs font-black uppercase tracking-widest text-indigo-300">{item.label}</span>
-                        {item.pct !== null && (
-                           <div className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-black ${item.isUp ? 'bg-emerald-500/30 text-emerald-200' : 'bg-rose-500/30 text-rose-200'}`}>
-                              {item.isUp ? '▲' : '▼'} {Math.abs(item.pct)}%
-                           </div>
-                        )}
+               {/* Right Side: Key Strategic Points */}
+               <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
+                  <h3 className="text-xs font-black text-indigo-300 uppercase tracking-widest pl-1 mb-2">Key Analytical Highlights</h3>
+                  {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item], i) => (
+                     <div key={key} className="flex items-start gap-4 group/item">
+                        <div className="bg-white/10 p-2 rounded-lg border border-white/10 shadow-sm group-hover/item:bg-emerald-500/20 group-hover/item:border-emerald-500/30 transition-all mt-1">
+                           <div className="w-2 h-2 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
+                        </div>
+                        <div className="flex-1">
+                           <p className="text-indigo-200 text-[10px] font-black uppercase tracking-widest mb-0.5 opacity-60 group-hover/item:opacity-100 transition-opacity">{item.label}</p>
+                           <p className="text-white text-base font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">{item.insight}</p>
+                        </div>
                      </div>
-                     <p className="text-sm font-bold text-white mb-4 leading-relaxed opacity-90">{item.insight}</p>
-                     <div className="pt-2 border-t border-white/5 flex justify-between items-baseline">
-                        <span className="text-2xl font-black text-white">{item.value}</span>
-                        <span className="text-[10px] text-white/40 font-bold uppercase italic">Current</span>
-                     </div>
-                  </div>
-               )) : (
-                  <div className="col-span-4 text-center py-6 text-indigo-300 text-sm italic">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div>
-               )}
+                  )) : (
+                     <div className="text-indigo-300 text-sm italic py-4">ไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์ประเด็นยุทธศาสตร์</div>
+                  )}
+               </div>
             </div>
          </div>
       </div>

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, PieChart, Pie, Cell, Legend
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, PieChart, Pie, Cell, Legend, ComposedChart
 } from 'recharts';
 import { MapPin, Calendar, ArrowUpRight, TrendingDown, Package, TrendingUp, Download, Camera, RefreshCw, AlertTriangle, Info, Activity, DollarSign } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
@@ -106,11 +106,13 @@ const CustomerInfo = ({ data }) => {
          [...data].map(r => [r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'], r['จังหวัด']]).filter(r => r[0] && r[1])
       ),
       allCustTypes: ['All', ...Array.from(custTypeSet).sort()],
-      allContractEnds: ['All', ...Array.from(contractEndSet).sort()]
+      allContractEnds: ['All', ...Array.from(contractEndSet).sort()],
+      monthsList: ['All', ...Array.from(new Set(sortedData.map(r => `${r['เดือน'] || r.month} ${r['ปี'] || r.year}`))) ]
     };
   }, [data]);
 
   const [filterProv, setFilterProv] = useState('All');
+  const [filterMonth, setFilterMonth] = useState('All');
   
   const allBranches = useMemo(() => {
      let available = allBranchesParsed;
@@ -145,6 +147,7 @@ const CustomerInfo = ({ data }) => {
     setFilterBranch('All');
     setFilterCustType('All');
     setFilterContractEnd('All');
+    setFilterMonth('All');
     if (customerOptions.length > 0) setSelectedCustNames([customerOptions[0]]);
   };
 
@@ -242,8 +245,9 @@ const CustomerInfo = ({ data }) => {
     }
 
     if (targetCriteria && lastMonth) {
-       if (lastMonth.volume < targetCriteria) {
-          alerts.push(`ปริมาณงานปัจจุบัน (${lastMonth.volume.toLocaleString()}) ยังไม่ถึงเกณฑ์เป้าหมาย (${targetCriteria.toLocaleString()})`);
+       const refMonth = filterMonth === 'All' ? lastMonth : (chartData.find(d => d.month === filterMonth) || lastMonth);
+       if (refMonth.volume < targetCriteria) {
+          alerts.push(`ปริมาณงานปัจจุบัน (${refMonth.volume.toLocaleString()}) ยังไม่ถึงเกณฑ์เป้าหมาย (${targetCriteria.toLocaleString()})`);
        }
     }
 
@@ -252,7 +256,7 @@ const CustomerInfo = ({ data }) => {
     }
     
     return alerts;
-  }, [cust, targetCriteria, lastMonth]);
+  }, [cust, targetCriteria, lastMonth, filterMonth, chartData]);
 
 
   // Derived Donut Chart Data
@@ -291,8 +295,21 @@ const CustomerInfo = ({ data }) => {
     if (!cust || !cust.monthlyDataArr || cust.monthlyDataArr.length === 0) return null;
     
     const history = cust.monthlyDataArr;
-    const current = history[history.length - 1];
-    const previous = history.length > 1 ? history[history.length - 2] : null;
+    let current, previous;
+
+    if (filterMonth === 'All') {
+       current = history[history.length - 1];
+       previous = history.length > 1 ? history[history.length - 2] : null;
+    } else {
+       const idx = history.findIndex(d => d.month === filterMonth);
+       if (idx === -1) {
+          current = history[history.length - 1];
+          previous = history.length > 1 ? history[history.length - 2] : null;
+       } else {
+          current = history[idx];
+          previous = idx > 0 ? history[idx - 1] : null;
+       }
+    }
 
     const getInsight = (curr, prev, type) => {
        if (!prev) return { pct: null, insight: 'ข้อมูลเดือนแรก ยังไม่สามารถวิเคราะห์แนวโน้มได้' };
@@ -344,7 +361,7 @@ const CustomerInfo = ({ data }) => {
        volume: { label: 'Volume Trend', value: formatNumberFull(current.volume) + ' pcs', ...vol },
        avgRev: { label: 'Efficiency Index', value: formatCurrency(currAvg), ...eff }
     };
- }, [cust, targetCriteria]);
+  }, [cust, targetCriteria, filterMonth]);
 
 
 
@@ -408,7 +425,14 @@ const CustomerInfo = ({ data }) => {
                </select>
              </div>
 
-             <button onClick={resetFilters} className="text-sm bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-200 h-[36px]">
+              <div>
+                <label className="block text-[11px] font-medium text-gray-500 mb-1">Select Month</label>
+                <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="w-40 bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm rounded-lg px-2 py-2 outline-none font-bold">
+                  {monthsList.map(m => <option key={m} value={m}>{m === 'All' ? 'Latest Month' : m}</option>)}
+                </select>
+              </div>
+
+              <button onClick={resetFilters} className="text-sm bg-gray-100 border border-gray-200 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-200 h-[36px]">
                 Reset
              </button>
              <button onClick={captureFullPage} className="text-sm bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-lg text-indigo-700 hover:bg-indigo-100 h-[36px] font-medium">

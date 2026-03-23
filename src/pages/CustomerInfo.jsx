@@ -568,86 +568,46 @@ const CustomerInfo = ({ data }) => {
                </div>
             </div>
 
-            {/* Balanced Executive Dashboard Header Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-10">
-               {/* Left: AI Strategic Insight Card (Analytical Qualitative) */}
-               <div className="lg:col-span-8">
-                  <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl h-full relative overflow-hidden group border border-white/10 text-white flex flex-col">
-                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-                     <div className="relative z-10 flex-1">
-                        <div className="flex items-center gap-3 mb-6">
-                           <div className="bg-white/10 p-2 rounded-xl border border-white/10 shadow-lg">
-                              <Activity size={22} className="text-indigo-200" />
-                           </div>
-                           <div>
-                              <h4 className="text-lg font-black tracking-tight uppercase leading-none mb-1">AI Data Intelligence</h4>
-                              <p className="text-indigo-300 text-[10px] font-black tracking-widest uppercase opacity-70">Analysis • {filterMonth === 'All' ? 'Latest' : filterMonth}</p>
-                           </div>
+            {/* Narrowed AI Strategic Insight Box (No Snapshot, Vertical Focus) */}
+            <div className="flex justify-start mb-8">
+               <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl max-w-lg w-full relative overflow-hidden group border border-white/10 text-white">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+                  
+                  <div className="relative z-10 text-left">
+                     <div className="flex items-center gap-3 mb-6">
+                        <div className="bg-white/10 p-2.5 rounded-xl border border-white/10 shadow-lg">
+                           <Activity size={24} className="text-indigo-200" />
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           {/* Narrative Section */}
-                           <div className="bg-white/5 p-5 rounded-2xl border border-white/5 backdrop-blur-md text-left">
-                              <h5 className="text-xs font-black text-white mb-2 flex items-center gap-2 uppercase tracking-wider">
-                                 <TrendingUp size={16} className="text-emerald-400" /> Executive Narrative
-                              </h5>
-                              <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-90">
-                                 ✨ {aiInsights?.overall}
-                              </p>
-                           </div>
-
-                           {/* Highlights Section */}
-                           <div className="space-y-3 text-left">
-                              <h5 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-1 pl-1">Key Strategic Highlights</h5>
-                              {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
-                                 <div key={key} className="flex items-start gap-3 group/item">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0 group-hover/item:bg-emerald-400 transition-colors" />
-                                    <div className="flex-1 text-left">
-                                       <p className="text-white text-xs font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">
-                                          <span className="text-indigo-300 text-[9px] font-black uppercase tracking-widest mr-2 opacity-60">{item.label}:</span>
-                                          {item.insight}
-                                       </p>
-                                    </div>
-                                 </div>
-                              )) : (
-                                 <div className="text-indigo-300 text-[10px] italic">No insights available</div>
-                              )}
-                           </div>
+                        <div>
+                           <h4 className="text-xl font-black tracking-tight uppercase">AI Data Intelligence</h4>
+                           <p className="text-indigo-300 text-[10px] font-black tracking-widest uppercase opacity-70">Analysis • {filterMonth === 'All' ? 'Latest' : filterMonth}</p>
                         </div>
                      </div>
-                  </div>
-               </div>
 
-               {/* Right: Quick Metrics Snapshot (Quantitative Summary) */}
-               <div className="lg:col-span-4 text-left">
-                  <div className="bg-white/70 backdrop-blur-xl p-6 rounded-3xl shadow-xl h-full border border-white relative overflow-hidden flex flex-col">
-                     <div className="flex items-center justify-between mb-6">
-                        <h5 className="text-slate-800 text-sm font-black uppercase tracking-widest">Snapshot</h5>
-                        <div className="p-2 bg-indigo-50 rounded-xl">
-                           <Activity size={18} className="text-indigo-600" />
-                        </div>
-                     </div>
-                     
-                     <div className="grid grid-cols-2 gap-4 flex-1">
-                        {[
-                           { label: 'Revenue', value: aiInsights?.revenue?.value || '฿0', icon: '฿' },
-                           { label: 'Volume', value: aiInsights?.volume?.value || '0 pcs', icon: '📦' },
-                           { label: 'Growth', value: (aiInsights?.revenue?.pct || 0) + '%', icon: '📈' },
-                           { label: 'Services', value: Object.keys(cust?.services || {}).length, icon: '🛠️' }
-                        ].map((item, idx) => (
-                           <div key={idx} className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-center">
-                              <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">{item.label}</p>
-                              <p className="text-slate-800 text-sm font-black tracking-tight">
-                                 {item.value}
-                              </p>
-                           </div>
-                        ))}
-                     </div>
-                     
-                     <div className="mt-6 pt-4 border-t border-slate-100">
-                        <p className="text-slate-400 text-[10px] font-bold italic text-center">
-                           Performance metrics are verified for {filterMonth === 'All' ? 'YTD' : filterMonth}.
+                     <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 backdrop-blur-md">
+                        <h3 className="text-sm font-black text-white mb-2 flex items-center gap-2 uppercase tracking-wider">
+                           <TrendingUp size={18} className="text-emerald-400" /> Executive Narrative
+                        </h3>
+                        <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-90">
+                           ✨ {aiInsights?.overall}
                         </p>
+                     </div>
+
+                     <div className="space-y-4">
+                        <h3 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-2 pl-1">Key Strategic Highlights</h3>
+                        {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
+                           <div key={key} className="flex items-start gap-4 group/item">
+                              <div className="bg-white/10 p-2 rounded-lg border border-white/10 group-hover/item:border-emerald-500/30 transition-all mt-1">
+                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-300 group-hover/item:bg-emerald-300" />
+                              </div>
+                              <div className="flex-1">
+                                 <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-0.5 opacity-60">{item.label}</p>
+                                 <p className="text-white text-sm font-bold leading-tight group-hover/item:text-emerald-50 transition-colors">{item.insight}</p>
+                              </div>
+                           </div>
+                        )) : (
+                           <div className="text-indigo-300 text-sm italic">No insights available</div>
+                        )}
                      </div>
                   </div>
                </div>

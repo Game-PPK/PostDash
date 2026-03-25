@@ -22,7 +22,7 @@ const Overview = ({ data }) => {
   const [filterMonth, setFilterMonth] = useState([]);
   const [selectedTrendMetric, setSelectedTrendMetric] = useState('revenue');
   const [membershipMetric, setMembershipMetric] = useState('revenue');
-  const [trendChartType, setTrendChartType] = useState('line');
+  const [trendChartType, setTrendChartType] = useState('bar');
   const [topLimit, setTopLimit] = useState(10);
   const dashboardRef = useRef(null);
 
@@ -669,8 +669,8 @@ const Overview = ({ data }) => {
          </div>
          
           <div className="h-80 w-full relative">
-            {/* Trend Summary Box */}
-            <div className="absolute top-0 right-0 z-10 flex gap-4 pointer-events-none">
+            {/* Trend Summary Box - Positioned Top-Left to avoid Q4 overlap */}
+            <div className="absolute top-0 left-0 z-10 flex gap-4 pointer-events-none">
               <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-2 px-3 rounded-xl shadow-sm text-right">
                 <p className="text-[10px] font-bold text-indigo-400 uppercase leading-none mb-1">Total Rev ({trendData.summary.year})</p>
                 <p className="text-sm font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>

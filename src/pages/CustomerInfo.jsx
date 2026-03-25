@@ -138,6 +138,24 @@ const CustomerInfo = ({ data }) => {
   const [filterYear, setFilterYear] = useState([]);
   const [filterProv, setFilterProv] = useState([]);
   const [filterMonth, setFilterMonth] = useState([]);
+
+  // Default filters on load (Year & Latest Month)
+  useEffect(() => {
+    if (data && data.length > 0 && filterYear.length === 0 && filterMonth.length === 0) {
+      const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+      const years = [...new Set(data.map(r => String(r['ปี'] || r.year || '2569')).filter(Boolean))].sort((a,b) => parseInt(b)-parseInt(a));
+      if (years.length > 0) {
+        const latestYear = years[0];
+        setFilterYear([latestYear]);
+        
+        const yearData = data.filter(r => String(r['ปี'] || r.year || '2569') === latestYear);
+        const months = [...new Set(yearData.map(r => r['เดือน'] || r.month).filter(Boolean))].sort((a,b) => (mToNum[b] || 0) - (mToNum[a] || 0));
+        if (months.length > 0) {
+          setFilterMonth([months[0]]);
+        }
+      }
+    }
+  }, [data]);
   
   const allBranches = useMemo(() => {
      let available = allBranchesParsed;
@@ -261,28 +279,41 @@ const CustomerInfo = ({ data }) => {
   }, [cust, filterYear, filterMonth, yearsList]);
 
   const trendData = useMemo(() => {
-     if (!cust) return [];
-     let targetYears = filterYear;
-     if (targetYears.length === 0) {
-        const maxYearStr = yearsList[1];
-        targetYears = maxYearStr ? [maxYearStr] : ['2026'];
-     }
-     const prevYears = targetYears.map(y => String(parseInt(y) - 1));
-     
-     const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
-     const validMonths = filterMonth.length > 0 ? filterMonth : Object.keys(mToNum);
-     
-     const mMap = {};
-     validMonths.forEach(m => {
-        mMap[m] = { name: m, revenue: 0, volume: 0, prevRevenue: 0, prevVolume: 0 };
-     });
-     
-     cust.monthlyDataArr.forEach(m => {
-        if (!mMap[m.mText]) return;
-        if (targetYears.includes(m.yearText)) { mMap[m.mText].revenue += m.revenue; mMap[m.mText].volume += m.volume; }
-        else if (prevYears.includes(m.yearText)) { mMap[m.mText].prevRevenue += m.revenue; mMap[m.mText].prevVolume += m.volume; }
-     });
-     return Object.values(mMap).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
+      if (!cust) return { data: [], summary: { totalRev: 0, totalVol: 0, year: '2569' } };
+      let targetYears = filterYear;
+      if (targetYears.length === 0) {
+         const maxYearStr = yearsList[1];
+         targetYears = maxYearStr ? [maxYearStr] : ['2569'];
+      }
+      const prevYears = targetYears.map(y => String(parseInt(y) - 1));
+      
+      const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+      // Fixed 12 months for X-axis
+      const validMonths = Object.keys(mToNum);
+      
+      const mMap = {};
+      validMonths.forEach(m => {
+         mMap[m] = { name: m, revenue: 0, volume: 0, prevRevenue: 0, prevVolume: 0 };
+      });
+      
+      cust.monthlyDataArr.forEach(m => {
+         if (!mMap[m.mText]) return;
+         if (targetYears.includes(m.yearText)) { mMap[m.mText].revenue += m.revenue; mMap[m.mText].volume += m.volume; }
+         else if (prevYears.includes(m.yearText)) { mMap[m.mText].prevRevenue += m.revenue; mMap[m.mText].prevVolume += m.volume; }
+      });
+
+      const res = Object.values(mMap).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
+      const summary = {
+        totalRev: 0,
+        totalVol: 0,
+        year: targetYears.length > 0 ? targetYears[0] : (yearsList[1] || '2569')
+      };
+      res.forEach(m => {
+        summary.totalRev += m.revenue;
+        summary.totalVol += m.volume;
+      });
+
+      return { data: res, summary };
   }, [cust, filterYear, filterMonth, yearsList]);
 
   const chartData = cust ? cust.monthlyDataArr : [];
@@ -713,16 +744,28 @@ const CustomerInfo = ({ data }) => {
                </button>
              </div>
              
-             <div className="h-72 w-full mt-4">
+             <div className="h-72 w-full mt-4 relative">
+              {/* Trend Summary Box - Top Left */}
+              <div className="absolute top-0 left-0 z-10 flex gap-4 pointer-events-none">
+                <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-2 px-3 rounded-xl shadow-sm">
+                  <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-tight leading-none mb-1">Total Rev ({trendData.summary.year})</p>
+                  <p className="text-xs font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>
+                </div>
+                <div className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 p-2 px-3 rounded-xl shadow-sm">
+                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-tight leading-none mb-1">Total Vol ({trendData.summary.year})</p>
+                  <p className="text-xs font-black text-emerald-700 leading-none">{formatNumberFull(trendData.summary.totalVol)} pcs</p>
+                </div>
+              </div>
+
               <ResponsiveContainer>
-                <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                <ComposedChart data={trendData.data} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} tickFormatter={(val) => `${val/1000}k`} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 11}} dy={10} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 11}} tickFormatter={(val) => `${val/1000}k`} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 11}} />
                   
                   {targetCriteria && (
-                     <ReferenceLine y={targetCriteria} yAxisId="right" stroke="#ff7f50" strokeDasharray="3 3" strokeWidth={2} label={{ position: 'right', value: 'Criteria', fill: '#ff7f50', fontSize: 12 }} />
+                     <ReferenceLine y={targetCriteria} yAxisId="right" stroke="#ff7f50" strokeDasharray="3 3" strokeWidth={2} label={{ position: 'right', value: 'Criteria', fill: '#ff7f50', fontSize: 10 }} />
                   )}
 
                   <Tooltip 
@@ -740,12 +783,12 @@ const CustomerInfo = ({ data }) => {
                             <div className="space-y-3">
                               <div className="flex justify-between items-start">
                                  <div>
-                                    <p className="text-[#8884d8] text-xs font-bold mb-0.5">Revenue (รายได้)</p>
+                                    <p className="text-[#8884d8] text-[10px] font-bold mb-0.5 uppercase tracking-tighter">Revenue (รายได้)</p>
                                     <p className="text-gray-900 text-sm font-black">{formatCurrency(data.revenue)}</p>
-                                    <p className="text-gray-400 text-[10px] font-medium">vs {formatCurrency(data.prevRevenue)}</p>
+                                    <p className="text-gray-400 text-[9px] font-medium tracking-tight">vs {formatCurrency(data.prevRevenue)}</p>
                                  </div>
                                  {revPct !== null && (
-                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${revPct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${revPct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
                                        {revPct >= 0 ? '▲' : '▼'} {Math.abs(revPct)}%
                                     </span>
                                  )}
@@ -753,22 +796,16 @@ const CustomerInfo = ({ data }) => {
 
                               <div className="flex justify-between items-start pt-2 border-t border-gray-50">
                                  <div>
-                                    <p className="text-[#82ca9d] text-xs font-bold mb-0.5">Volume (จำนวน)</p>
-                                    <p className="text-gray-900 text-sm font-black">{formatNumberFull(data.volume)} pcs</p>
-                                    <p className="text-gray-400 text-[10px] font-medium">vs {formatNumberFull(data.prevVolume)} pcs</p>
+                                    <p className="text-[#82ca9d] text-[10px] font-bold mb-0.5 uppercase tracking-tighter">Volume (จำนวนชิ้น)</p>
+                                    <p className="text-gray-900 text-sm font-black">{formatNumberFull(data.volume)}</p>
+                                    <p className="text-gray-400 text-[9px] font-medium tracking-tight">vs {formatNumberFull(data.prevVolume)}</p>
                                  </div>
                                  {volPct !== null && (
-                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${volPct >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${volPct >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
                                        {volPct >= 0 ? '▲' : '▼'} {Math.abs(volPct)}%
                                     </span>
                                  )}
                               </div>
-                              
-                              {targetCriteria && (
-                                <p className={`font-semibold text-xs mt-2 pt-2 border-t border-gray-100 ${data.volume >= targetCriteria ? 'text-emerald-600' : 'text-rose-500'}`}>
-                                  Target: {((data.volume / targetCriteria) * 100).toFixed(1)}% ({data.volume >= targetCriteria ? 'Met!' : 'Missed'})
-                                </p>
-                              )}
                             </div>
                           </div>
                         );
@@ -776,25 +813,32 @@ const CustomerInfo = ({ data }) => {
                       return null;
                     }}
                   />
+                  
                   <Legend 
                     iconType="circle"
                     content={() => (
-                      <div className="flex flex-wrap justify-center gap-4 text-[11px] font-semibold pt-2">
-                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#6366f1]"></span>Revenue ปีนี้</span>
-                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#94a3b8] opacity-70"></span>Revenue ปีก่อน</span>
-                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#34d399]"></span>Volume ปีนี้</span>
-                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#cbd5e1]"></span>Volume ปีก่อน</span>
+                      <div className="flex flex-wrap justify-center gap-4 text-[10px] font-bold pt-2">
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-[#6366f1]"></span>Revenue ปีนี้</span>
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-[#94a3b8] opacity-70"></span>Revenue ปีก่อน</span>
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-[#34d399]"></span>Volume ปีนี้</span>
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-[#cbd5e1]"></span>Volume ปีก่อน</span>
                       </div>
                     )}
                   />
                   
-                  {/* Previous Year Overlay - Gray to distinguish */}
-                  <Bar yAxisId="right" dataKey="prevVolume" name="Volume ปีก่อน" fill="#cbd5e1" fillOpacity={0.8} radius={[4, 4, 0, 0]} barSize={26} />
-                  <Line yAxisId="left" type="monotone" dataKey="prevRevenue" name="Revenue ปีก่อน" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
+                  <Bar yAxisId="right" dataKey="prevVolume" name="Volume ปีก่อน" fill="#cbd5e1" fillOpacity={0.6} radius={[4, 4, 0, 0]} barSize={24} strokeDasharray="3 3" />
+                  <Line yAxisId="left" type="monotone" dataKey="prevRevenue" name="Revenue ปีก่อน" stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="4 4" dot={false} activeDot={false} opacity={0.6} />
                   
-                  {/* Current Year - Vivid colors */}
-                  <Bar yAxisId="right" dataKey="volume" name="Volume ปีนี้" fill="#34d399" radius={[4, 4, 0, 0]} barSize={26} />
-                  <Line yAxisId="left" type="monotone" dataKey="revenue" name="Revenue ปีนี้" stroke="#6366f1" strokeWidth={3} dot={{r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6}} />
+                  <Bar yAxisId="right" dataKey="volume" name="Volume ปีนี้" fill="#34d399" radius={[4, 4, 0, 0]} barSize={24}>
+                    <LabelList dataKey="volume" position="top" content={({x, y, value}) => (
+                      <text x={x + 12} y={y - 8} fill="#059669" fontSize={9} fontWeight="bold" textAnchor="middle">{formatNumberCompact(value)}</text>
+                    )} />
+                  </Bar>
+                  <Line yAxisId="left" type="monotone" dataKey="revenue" name="Revenue ปีนี้" stroke="#6366f1" strokeWidth={3} dot={{r: 3, fill: '#6366f1', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 5}}>
+                    <LabelList dataKey="revenue" position="top" content={({x, y, value}) => (
+                      <text x={x} y={y - 12} fill="#4f46e5" fontSize={9} fontWeight="bold" textAnchor="middle">{formatNumberCompact(value)}</text>
+                    )} />
+                  </Line>
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

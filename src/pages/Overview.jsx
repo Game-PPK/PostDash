@@ -609,8 +609,8 @@ const Overview = ({ data }) => {
          <div className="lg:col-span-4">
             <div className="bg-gradient-to-br from-indigo-700 to-slate-900 p-6 rounded-3xl shadow-xl h-full relative overflow-hidden group border border-white/10 text-white flex flex-col">
                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
-               <div className="relative z-10 flex-1">
-                  <div className="flex items-center gap-3 mb-6 text-left">
+               <div className="relative z-10 flex-1 text-left">
+                  <div className="flex items-center gap-3 mb-6">
                      <div className="bg-white/10 p-2 rounded-xl border border-white/10">
                         <Activity size={20} className="text-indigo-200" />
                      </div>
@@ -620,13 +620,13 @@ const Overview = ({ data }) => {
                      </div>
                   </div>
 
-                  <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 backdrop-blur-md text-left">
+                  <div className="bg-white/5 p-5 rounded-2xl border border-white/5 mb-6 backdrop-blur-md">
                      <p className="text-indigo-50 text-sm leading-relaxed font-bold italic opacity-95">
                         ✨ {aiInsights?.overall}
                      </p>
                   </div>
 
-                  <div className="space-y-4 text-left">
+                  <div className="space-y-4">
                      <h3 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-1 pl-1">Key Contextual Highlights</h3>
                      {aiInsights ? Object.entries(aiInsights).filter(([k]) => k !== 'overall').map(([key, item]) => (
                         <div key={key} className="flex items-start gap-4 group/item">
@@ -648,159 +648,161 @@ const Overview = ({ data }) => {
 
          {/* Right: Trend Analysis Box */}
          <div className="lg:col-span-8 bg-white p-6 rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-               <div>
-                  <h3 className="text-xl font-bold text-gray-800">
-                     {selectedTrendMetric === 'revenue' && 'Revenue Trend (รายได้)'}
-                     {selectedTrendMetric === 'volume' && 'Volume Trend (ปริมาณงาน)'}
-                     {selectedTrendMetric === 'accounts' && 'Active Accounts Trend (จำนวนลูกค้า)'}
-                     {selectedTrendMetric === 'avgRev' && 'Avg Rev/Piece Trend (รายได้เฉลี่ยต่อชิ้น)'}
-                  </h3>
-                  <p className="text-sm text-gray-500">Compare monthly performance and growth rates</p>
-               </div>
-            
-            <div className="flex items-center gap-3">
-               <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider hidden md:block">Visualization</span>
-               <div className="flex bg-gray-100 p-1 rounded-xl">
-                  <button onClick={() => setTrendChartType('line')} className={`text-xs px-4 py-1.5 rounded-lg font-bold transition-all ${trendChartType === 'line' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}>Line</button>
-                  <button onClick={() => setTrendChartType('bar')} className={`text-xs px-4 py-1.5 rounded-lg font-bold transition-all ${trendChartType === 'bar' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}>Bar</button>
-               </div>
-            </div>
-         </div>
-         
-          <div className="h-80 w-full relative">
-            {/* Trend Summary Box - Positioned Top-Left to avoid Q4 overlap */}
-            <div className="absolute top-0 left-0 z-10 flex gap-4 pointer-events-none">
-              <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-2 px-3 rounded-xl shadow-sm text-right">
-                <p className="text-[10px] font-bold text-indigo-400 uppercase leading-none mb-1">Total Rev ({trendData.summary.year})</p>
-                <p className="text-sm font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>
-              </div>
-              <div className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 p-2 px-3 rounded-xl shadow-sm text-right">
-                <p className="text-[10px] font-bold text-emerald-400 uppercase leading-none mb-1">Total Vol ({trendData.summary.year})</p>
-                <p className="text-sm font-black text-emerald-700 leading-none">{formatNumber(trendData.summary.totalVol)} <span className="text-[10px]">pcs</span></p>
-              </div>
-            </div>
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div className="flex items-start gap-4">
+                   <div>
+                      <h3 className="text-xl font-bold text-gray-800">
+                         {selectedTrendMetric === 'revenue' && 'Revenue Trend (รายได้)'}
+                         {selectedTrendMetric === 'volume' && 'Volume Trend (ปริมาณงาน)'}
+                         {selectedTrendMetric === 'accounts' && 'Active Accounts Trend (จำนวนลูกค้า)'}
+                         {selectedTrendMetric === 'avgRev' && 'Avg Rev/Piece Trend (รายได้เฉลี่ยต่อชิ้น)'}
+                      </h3>
+                      <p className="text-sm text-gray-500">Compare monthly performance and growth rates</p>
+                   </div>
+                   {/* Integrated Summary Box in Header */}
+                   {selectedTrendMetric === 'revenue' && (
+                     <div className="flex gap-2 mt-1">
+                        <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-1.5 px-2.5 rounded-xl shadow-sm">
+                           <p className="text-[9px] font-bold text-indigo-400 uppercase leading-none mb-1">Total Rev ({trendData.summary.year})</p>
+                           <p className="text-sm font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>
+                        </div>
+                        <div className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 p-1.5 px-2.5 rounded-xl shadow-sm">
+                           <p className="text-[9px] font-bold text-emerald-400 uppercase leading-none mb-1">Total Vol ({trendData.summary.year})</p>
+                           <p className="text-sm font-black text-emerald-700 leading-none">{formatNumber(trendData.summary.totalVol)} pcs</p>
+                        </div>
+                     </div>
+                   )}
+                </div>
+             
+                <div className="flex items-center gap-3">
+                   <span className="text-[11px] text-gray-400 font-bold uppercase tracking-wider hidden md:block">Visualization</span>
+                   <div className="flex bg-gray-100 p-1 rounded-xl">
+                      <button onClick={() => setTrendChartType('line')} className={`text-xs px-4 py-1.5 rounded-lg font-bold transition-all ${trendChartType === 'line' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}>Line</button>
+                      <button onClick={() => setTrendChartType('bar')} className={`text-xs px-4 py-1.5 rounded-lg font-bold transition-all ${trendChartType === 'bar' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}>Bar</button>
+                   </div>
+                </div>
+             </div>
+          
+             <div className="h-80 w-full relative">
+                <ResponsiveContainer>
+                   <ComposedChart data={trendData.chartData} margin={{ top: 25, right: 20, left: 10, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12, fontWeight: 500}} dy={15} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} 
+                          tickFormatter={val => selectedTrendMetric === 'revenue' ? `${val/1000}k` : selectedTrendMetric === 'avgRev' ? val.toFixed(0) : formatNumber(val)} />
+                      <Tooltip 
+                          content={({ active, payload, label }) => {
+                             if (active && payload && payload.length) {
+                                const d = payload[0].payload;
+                                let val = selectedTrendMetric === 'revenue' ? d.revenue : selectedTrendMetric === 'volume' ? d.volume : selectedTrendMetric === 'accounts' ? d.activeAccounts : (d.volume ? d.revenue/d.volume : 0);
+                                let prevVal = selectedTrendMetric === 'revenue' ? d.prevRevenue : selectedTrendMetric === 'volume' ? d.prevVolume : selectedTrendMetric === 'accounts' ? d.prevActiveAccounts : (d.prevVolume ? d.prevRevenue/d.prevVolume : 0);
+                                
+                                let yoyPct = prevVal ? (((val - prevVal)/prevVal)*100).toFixed(1) : null;
+                                let formattedVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(val) : formatNumber(val);
+                                let formattedPrevVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(prevVal) : formatNumber(prevVal);
+                                
+                                const idx = trendData.chartData.findIndex(x => x.name === label);
+                                const prevM = idx > 0 ? trendData.chartData[idx - 1] : null;
+                                let prevMoMVal = prevM ? (selectedTrendMetric === 'revenue' ? prevM.revenue : selectedTrendMetric === 'volume' ? prevM.volume : selectedTrendMetric === 'accounts' ? prevM.activeAccounts : (prevM.volume ? prevM.revenue/prevM.volume : 0)) : null;
+                                let momPct = prevMoMVal ? (((val - prevMoMVal)/prevMoMVal)*100).toFixed(1) : null;
 
-            <ResponsiveContainer>
-               <ComposedChart data={trendData.chartData} margin={{ top: 25, right: 20, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12, fontWeight: 500}} dy={15} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} 
-                      tickFormatter={val => selectedTrendMetric === 'revenue' ? `${val/1000}k` : selectedTrendMetric === 'avgRev' ? val.toFixed(0) : formatNumber(val)} />
-                  <Tooltip 
-                      content={({ active, payload, label }) => {
-                         if (active && payload && payload.length) {
-                            const d = payload[0].payload;
-                            let val = selectedTrendMetric === 'revenue' ? d.revenue : selectedTrendMetric === 'volume' ? d.volume : selectedTrendMetric === 'accounts' ? d.activeAccounts : (d.volume ? d.revenue/d.volume : 0);
-                            let prevVal = selectedTrendMetric === 'revenue' ? d.prevRevenue : selectedTrendMetric === 'volume' ? d.prevVolume : selectedTrendMetric === 'accounts' ? d.prevActiveAccounts : (d.prevVolume ? d.prevRevenue/d.prevVolume : 0);
-                            
-                            let yoyPct = prevVal ? (((val - prevVal)/prevVal)*100).toFixed(1) : null;
-                            let formattedVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(val) : formatNumber(val);
-                            let formattedPrevVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(prevVal) : formatNumber(prevVal);
-                            
-                            const idx = trendData.chartData.findIndex(x => x.name === label);
-                            const prevM = idx > 0 ? trendData.chartData[idx - 1] : null;
-                            let prevMoMVal = prevM ? (selectedTrendMetric === 'revenue' ? prevM.revenue : selectedTrendMetric === 'volume' ? prevM.volume : selectedTrendMetric === 'accounts' ? prevM.activeAccounts : (prevM.volume ? prevM.revenue/prevM.volume : 0)) : null;
-                            let momPct = prevMoMVal ? (((val - prevMoMVal)/prevMoMVal)*100).toFixed(1) : null;
+                                return (
+                                   <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 min-w-[200px]">
+                                      <p className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-3 border-b border-gray-50 pb-2">{label}</p>
+                                      
+                                      <div className="flex justify-between items-center mb-2">
+                                         <span className="text-xs text-slate-500 font-medium">This Year</span>
+                                         <span className="text-sm font-black text-gray-900">{formattedVal}</span>
+                                      </div>
+                                      
+                                      <div className="flex justify-between items-center mb-3">
+                                         <span className="text-xs text-slate-400">Last Year</span>
+                                         <span className="text-xs font-bold text-slate-500">{formattedPrevVal}</span>
+                                      </div>
 
-                            return (
-                               <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 min-w-[200px]">
-                                  <p className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-3 border-b border-gray-50 pb-2">{label}</p>
-                                  
-                                  <div className="flex justify-between items-center mb-2">
-                                     <span className="text-xs text-slate-500 font-medium">This Year</span>
-                                     <span className="text-sm font-black text-gray-900">{formattedVal}</span>
-                                  </div>
-                                  
-                                  <div className="flex justify-between items-center mb-3">
-                                     <span className="text-xs text-slate-400">Last Year</span>
-                                     <span className="text-xs font-bold text-slate-500">{formattedPrevVal}</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
-                                     {momPct !== null && (
-                                        <div className="flex flex-col">
-                                           <span className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">MoM</span>
-                                           <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${momPct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                                              {momPct >= 0 ? '▲' : '▼'} {Math.abs(momPct)}%
-                                           </span>
-                                        </div>
-                                     )}
-                                     {yoyPct !== null && (
-                                        <div className="flex flex-col ml-auto text-right">
-                                           <span className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">YoY</span>
-                                           <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${yoyPct >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
-                                              {yoyPct >= 0 ? '▲' : '▼'} {Math.abs(yoyPct)}%
-                                           </span>
-                                        </div>
-                                     )}
-                                  </div>
-                                </div>
-                            );
-                         }
-                         return null;
-                      }}
-                      cursor={{fill: '#f8fafc'}}
-                  />
-                  <Legend iconType="circle" />
-                  {selectedTrendMetric === 'revenue' && (trendChartType === 'line' ? 
-                     <>
-                        <Line type="monotone" dataKey="prevRevenue" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
-                        <Line type="monotone" dataKey="revenue" name="This Year" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}}>
-                           <LabelList dataKey="revenue" position="top" offset={15} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
-                        </Line>
-                     </> : 
-                     <>
-                        <Bar dataKey="prevRevenue" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
-                        <Bar dataKey="revenue" name="This Year" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={20}>
-                           <LabelList dataKey="revenue" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
-                        </Bar>
-                     </>
-                  )}
-                  {selectedTrendMetric === 'revenue' && <ReferenceLine y={0} stroke="#e5e7eb" />}
-                  
-                  {selectedTrendMetric === 'volume' && (trendChartType === 'line' ? 
-                     <>
-                        <Line type="monotone" dataKey="prevVolume" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
-                        <Line type="monotone" dataKey="volume" name="This Year" stroke="#3b82f6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
-                     </> : 
-                     <>
-                        <Bar dataKey="prevVolume" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
-                        <Bar dataKey="volume" name="This Year" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={20}>
-                           <LabelList dataKey="volume" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#3b82f6', fontSize: 10, fontWeight: 'bold'}} />
-                        </Bar>
-                     </>
-                  )}
-                  
-                  {selectedTrendMetric === 'accounts' && (trendChartType === 'line' ? 
-                     <>
-                        <Line type="monotone" dataKey="prevActiveAccounts" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
-                        <Line type="monotone" dataKey="activeAccounts" name="This Year" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}}>
-                           <LabelList dataKey="activeAccounts" position="top" offset={10} style={{fill: '#10b981', fontSize: 10, fontWeight: 'bold'}} />
-                        </Line>
-                     </> : 
-                     <>
-                        <Bar dataKey="prevActiveAccounts" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
-                        <Bar dataKey="activeAccounts" name="This Year" fill="#10b981" radius={[6, 6, 0, 0]} barSize={20}>
-                            <LabelList dataKey="activeAccounts" position="top" offset={10} style={{fill: '#10b981', fontSize: 10, fontWeight: 'bold'}} />
-                        </Bar>
-                     </>
-                  )}
-                  
-                  {selectedTrendMetric === 'avgRev' && (trendChartType === 'line' ? 
-                     <Line type="monotone" dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" stroke="#8b5cf6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}}>
-                        <LabelList dataKey={(d) => d.volume ? d.revenue/d.volume : 0} position="top" offset={10} formatter={(val) => val.toFixed(1)} style={{fill: '#8b5cf6', fontSize: 10, fontWeight: 'bold'}} />
-                     </Line> : 
-                     <Bar dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40}>
-                         <LabelList dataKey={(d) => d.volume ? d.revenue/d.volume : 0} position="top" offset={10} formatter={(val) => val.toFixed(1)} style={{fill: '#8b5cf6', fontSize: 10, fontWeight: 'bold'}} />
-                     </Bar>
-                  )}
-               </ComposedChart>
-            </ResponsiveContainer>
-         </div>
-      </div>
-   </div>
-
+                                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+                                         {momPct !== null && (
+                                            <div className="flex flex-col">
+                                               <span className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">MoM</span>
+                                               <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${momPct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                                  {momPct >= 0 ? '▲' : '▼'} {Math.abs(momPct)}%
+                                               </span>
+                                            </div>
+                                         )}
+                                         {yoyPct !== null && (
+                                            <div className="flex flex-col ml-auto text-right">
+                                               <span className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">YoY</span>
+                                               <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${yoyPct >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                  {yoyPct >= 0 ? '▲' : '▼'} {Math.abs(yoyPct)}%
+                                               </span>
+                                            </div>
+                                         )}
+                                      </div>
+                                    </div>
+                                );
+                             }
+                             return null;
+                          }}
+                          cursor={{fill: '#f8fafc'}}
+                      />
+                      <Legend iconType="circle" />
+                      {selectedTrendMetric === 'revenue' && (trendChartType === 'line' ? 
+                         <>
+                            <Line type="monotone" dataKey="prevRevenue" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
+                            <Line type="monotone" dataKey="revenue" name="This Year" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}}>
+                               <LabelList dataKey="revenue" position="top" offset={15} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
+                            </Line>
+                         </> : 
+                         <>
+                            <Bar dataKey="prevRevenue" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
+                            <Bar dataKey="revenue" name="This Year" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={20}>
+                               <LabelList dataKey="revenue" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
+                            </Bar>
+                         </>
+                      )}
+                      {selectedTrendMetric === 'revenue' && <ReferenceLine y={0} stroke="#e5e7eb" />}
+                      
+                      {selectedTrendMetric === 'volume' && (trendChartType === 'line' ? 
+                         <>
+                            <Line type="monotone" dataKey="prevVolume" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
+                            <Line type="monotone" dataKey="volume" name="This Year" stroke="#3b82f6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
+                         </> : 
+                         <>
+                            <Bar dataKey="prevVolume" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
+                            <Bar dataKey="volume" name="This Year" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={20}>
+                               <LabelList dataKey="volume" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#3b82f6', fontSize: 10, fontWeight: 'bold'}} />
+                            </Bar>
+                         </>
+                      )}
+                      
+                      {selectedTrendMetric === 'accounts' && (trendChartType === 'line' ? 
+                         <>
+                            <Line type="monotone" dataKey="prevActiveAccounts" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
+                            <Line type="monotone" dataKey="activeAccounts" name="This Year" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}}>
+                               <LabelList dataKey="activeAccounts" position="top" offset={10} style={{fill: '#10b981', fontSize: 10, fontWeight: 'bold'}} />
+                            </Line>
+                         </> : 
+                         <>
+                            <Bar dataKey="prevActiveAccounts" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
+                            <Bar dataKey="activeAccounts" name="This Year" fill="#10b981" radius={[6, 6, 0, 0]} barSize={20}>
+                                <LabelList dataKey="activeAccounts" position="top" offset={10} style={{fill: '#10b981', fontSize: 10, fontWeight: 'bold'}} />
+                            </Bar>
+                         </>
+                      )}
+                      
+                      {selectedTrendMetric === 'avgRev' && (trendChartType === 'line' ? 
+                         <Line type="monotone" dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" stroke="#8b5cf6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}}>
+                            <LabelList dataKey={(d) => d.volume ? d.revenue/d.volume : 0} position="top" offset={10} formatter={(val) => val.toFixed(1)} style={{fill: '#8b5cf6', fontSize: 10, fontWeight: 'bold'}} />
+                         </Line> : 
+                         <Bar dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40}>
+                             <LabelList dataKey={(d) => d.volume ? d.revenue/d.volume : 0} position="top" offset={10} formatter={(val) => val.toFixed(1)} style={{fill: '#8b5cf6', fontSize: 10, fontWeight: 'bold'}} />
+                         </Bar>
+                      )}
+                   </ComposedChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue by Province Chart */}

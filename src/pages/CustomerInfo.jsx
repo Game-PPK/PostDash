@@ -738,25 +738,26 @@ const CustomerInfo = ({ data }) => {
         {cust && (
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100" ref={chartRef}>
              <div className="flex justify-between items-center mb-6">
-               <h3 className="text-lg font-semibold text-gray-800">Monthly Usage Trends (Volume vs Revenue)</h3>
+               <div className="flex items-center gap-4">
+                 <h3 className="text-lg font-semibold text-gray-800">Monthly Usage Trends (Volume vs Revenue)</h3>
+                 {/* Trend Summary Box - Integrated in Header */}
+                 <div className="flex gap-2">
+                    <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-1.5 px-2.5 rounded-xl shadow-sm">
+                      <p className="text-[9px] font-bold text-indigo-400 uppercase leading-none mb-1">Total Rev ({trendData.summary.year})</p>
+                      <p className="text-sm font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>
+                    </div>
+                    <div className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 p-1.5 px-2.5 rounded-xl shadow-sm">
+                      <p className="text-[9px] font-bold text-emerald-400 uppercase leading-none mb-1">Total Vol ({trendData.summary.year})</p>
+                      <p className="text-sm font-black text-emerald-700 leading-none">{formatNumberFull(trendData.summary.totalVol)} pcs</p>
+                    </div>
+                 </div>
+               </div>
                <button onClick={captureChart} className="flex items-center text-sm text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full font-medium hover:bg-indigo-100 transition-colors">
                   <Camera size={14} className="mr-1.5" /> Capture Chart
                </button>
              </div>
              
              <div className="h-72 w-full mt-4 relative">
-              {/* Trend Summary Box - Top Left */}
-              <div className="absolute top-0 left-0 z-10 flex gap-4 pointer-events-none">
-                <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-2 px-3 rounded-xl shadow-sm">
-                  <p className="text-[9px] font-bold text-indigo-400 uppercase tracking-tight leading-none mb-1">Total Rev ({trendData.summary.year})</p>
-                  <p className="text-xs font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>
-                </div>
-                <div className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 p-2 px-3 rounded-xl shadow-sm">
-                  <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-tight leading-none mb-1">Total Vol ({trendData.summary.year})</p>
-                  <p className="text-xs font-black text-emerald-700 leading-none">{formatNumberFull(trendData.summary.totalVol)} pcs</p>
-                </div>
-              </div>
-
               <ResponsiveContainer>
                 <ComposedChart data={trendData.data} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />

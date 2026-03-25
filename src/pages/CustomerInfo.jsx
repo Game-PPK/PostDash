@@ -26,8 +26,9 @@ const CustomerInfo = ({ data }) => {
     const custTypeSet = new Set();
     const contractEndSet = new Set();
     
+    const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+
     const sortedData = [...data].sort((a,b) => {
-      const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
       const yearA = parseInt(a['ปี'] || a.year || 2026);
       const yearB = parseInt(b['ปี'] || b.year || 2026);
       const valA = yearA * 100 + (mToNum[a['เดือน'] || a.month] || 0);

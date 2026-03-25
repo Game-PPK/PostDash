@@ -49,9 +49,14 @@ const CustomerInfo = ({ data }) => {
       if (custType !== '-') custTypeSet.add(custType);
       if (contractEnd !== '-') contractEndSet.add(contractEnd);
 
+      const yearVal = parseInt(row['ปี'] || row.year || 2026);
+      const monthVal = mToNum[row['เดือน'] || row.month] || 0;
+      const rowDateVal = yearVal * 100 + monthVal;
+
       if (!custMap[name]) {
         custMap[name] = { 
           name, branch, province: prov, contractEnd,
+          latestDateVal: rowDateVal,
           volumeCriteria: row['volumeCriteria'] || row['เกณฑ์ชิ้นงาน'] || '-',
           membership: row['membership'] || row['ระดับสมาชิก'] || '-',
           totalRev: 0, totalVol: 0, services: {}, monthlyDataMap: {}, monthlyDataArr: [],
@@ -61,8 +66,15 @@ const CustomerInfo = ({ data }) => {
         if (contractEnd && contractEnd !== '-') custMap[name].contractEnd = contractEnd;
         const vCrit = row['volumeCriteria'] || row['เกณฑ์ชิ้นงาน'];
         if (vCrit && vCrit !== '-' && vCrit !== '0') custMap[name].volumeCriteria = vCrit;
+        
         const memb = row['membership'] || row['ระดับสมาชิก'];
-        if (memb && memb !== '-') custMap[name].membership = memb;
+        // Update membership if this row is newer OR if it's the same date but the new one is not '-'
+        if (rowDateVal > custMap[name].latestDateVal) {
+           custMap[name].membership = memb || '-';
+           custMap[name].latestDateVal = rowDateVal;
+        } else if (rowDateVal === custMap[name].latestDateVal && memb && memb !== '-') {
+           custMap[name].membership = memb;
+        }
       }
       
       const rev = parseFloat(row['รายได้']) || parseFloat(String(row['รายได้']).replace(/,/g, '')) || 0;

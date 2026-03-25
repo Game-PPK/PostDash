@@ -540,7 +540,7 @@ const CustomerInfo = ({ data }) => {
         {filterContractEnd.length > 0 && (
           <div className="bg-orange-50 p-4 rounded-2xl shadow-sm border border-orange-100 mt-4 mb-2 relative z-10">
             <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center">
-               <AlertTriangle size={16} className="mr-2" /> รายชื่อลูกค้าที่หมดสัญญาเดือน {filterContractEnd} ทั้งหมด ({filteredCustomers.length} ราย)
+               <AlertTriangle size={16} className="mr-2" /> รายชื่อลูกค้าที่หมดสัญญาเดือน {filterContractEnd.join(', ')} ทั้งหมด ({filteredCustomers.length} ราย)
             </h3>
             <div className="flex flex-wrap gap-2">
                {filteredCustomers.map((c, i) => (

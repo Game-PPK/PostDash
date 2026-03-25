@@ -313,7 +313,7 @@ const CustomerInfo = ({ data }) => {
     }
 
     if (targetCriteria && lastMonth) {
-       const refMonth = filterMonth === 'All' ? lastMonth : (chartData.find(d => d.month === filterMonth) || lastMonth);
+       const refMonth = filterMonth.length === 0 ? lastMonth : (chartData.find(d => filterMonth.includes(d.mText)) || lastMonth);
        if (refMonth.volume < targetCriteria) {
           alerts.push(`ปริมาณงานปัจจุบัน (${refMonth.volume.toLocaleString()}) ยังไม่ถึงเกณฑ์เป้าหมาย (${targetCriteria.toLocaleString()})`);
        }

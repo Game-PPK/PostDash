@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Users, Package, DollarSign, Activity, Filter, RefreshCw, Download, PieChart as PieIcon } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import MultiSelectDropdown from '../components/MultiSelectDropdown';
 
 // Common colors for charts
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F'];
@@ -12,12 +13,12 @@ const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F'
 const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 
 const Overview = ({ data }) => {
-  const [filterProv, setFilterProv] = useState('All');
-  const [filterType, setFilterType] = useState('All');
-  const [filterBranch, setFilterBranch] = useState('All');
-  const [filterMembership, setFilterMembership] = useState('All');
-  const [filterCustType, setFilterCustType] = useState('All');
-  const [filterMonth, setFilterMonth] = useState('All');
+  const [filterProv, setFilterProv] = useState([]);
+  const [filterType, setFilterType] = useState([]);
+  const [filterBranch, setFilterBranch] = useState([]);
+  const [filterMembership, setFilterMembership] = useState([]);
+  const [filterCustType, setFilterCustType] = useState([]);
+  const [filterMonth, setFilterMonth] = useState([]);
   const [selectedTrendMetric, setSelectedTrendMetric] = useState('revenue');
   const [membershipMetric, setMembershipMetric] = useState('revenue');
   const [trendChartType, setTrendChartType] = useState('line');
@@ -28,12 +29,12 @@ const Overview = ({ data }) => {
   const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val || 0);
 
   const handleResetFilters = () => {
-    setFilterProv('All');
-    setFilterType('All');
-    setFilterBranch('All');
-    setFilterMembership('All');
-    setFilterCustType('All');
-    setFilterMonth('All');
+    setFilterProv([]);
+    setFilterType([]);
+    setFilterBranch([]);
+    setFilterMembership([]);
+    setFilterCustType([]);
+    setFilterMonth([]);
   };
 
   const handleExportImage = () => {
@@ -54,7 +55,7 @@ const Overview = ({ data }) => {
   const serviceTypes = useMemo(() => ['All', ...Array.from(new Set(data.map(r => r['ประเภทบริการ']).filter(Boolean))).sort()], [data]);
   const branches = useMemo(() => {
      return ['All', ...Array.from(new Set(
-        data.filter(r => filterProv === 'All' || r['จังหวัด'] === filterProv)
+        data.filter(r => filterProv.length === 0 || filterProv.includes(r['จังหวัด']))
             .map(r => r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'])
             .filter(Boolean)
      )).sort()];
@@ -69,13 +70,13 @@ const Overview = ({ data }) => {
   const filteredData = useMemo(() => {
     return data.filter(r => {
       const mn = r['เดือน'] || r.month;
-      if (filterMonth !== 'All' && mn !== filterMonth) return false;
-      if (filterProv !== 'All' && r['จังหวัด'] !== filterProv) return false;
-      if (filterType !== 'All' && r['ประเภทบริการ'] !== filterType) return false;
+      if (filterMonth.length > 0 && !filterMonth.includes(mn)) return false;
+      if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+      if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
       const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
-      if (filterBranch !== 'All' && b !== filterBranch) return false;
-      if (filterMembership !== 'All' && r.membership !== filterMembership) return false;
-      if (filterCustType !== 'All' && r.customerType !== filterCustType) return false;
+      if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
+      if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
+      if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return false;
       return true;
     });
   }, [data, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType]);
@@ -353,24 +354,12 @@ const Overview = ({ data }) => {
       {/* Filters */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
         <div className="flex items-center text-gray-500 font-medium mr-2"><Filter size={18} className="mr-2"/> Filters:</div>
-        <select className="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 rounded-xl outline-none min-w-[150px]" value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
-          {monthsList.map(p => <option key={p} value={p}>{p === 'All' ? 'All Months' : p}</option>)}
-        </select>
-        <select className="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 rounded-xl outline-none min-w-[150px]" value={filterProv} onChange={e => setFilterProv(e.target.value)}>
-          {provinces.map(p => <option key={p} value={p}>{p === 'All' ? 'All Provinces' : p}</option>)}
-        </select>
-        <select className="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 rounded-xl outline-none min-w-[150px]" value={filterBranch} onChange={e => setFilterBranch(e.target.value)}>
-          {branches.map(b => <option key={b} value={b}>{b === 'All' ? 'All Branches' : b}</option>)}
-        </select>
-        <select className="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 rounded-xl outline-none min-w-[150px]" value={filterType} onChange={e => setFilterType(e.target.value)}>
-          {serviceTypes.map(t => <option key={t} value={t}>{t === 'All' ? 'All Services' : t}</option>)}
-        </select>
-        <select className="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 rounded-xl outline-none min-w-[150px]" value={filterMembership} onChange={e => setFilterMembership(e.target.value)}>
-          {memberships.map(t => <option key={t} value={t}>{t === 'All' ? 'All Memberships' : t}</option>)}
-        </select>
-        <select className="bg-gray-50 border border-gray-200 text-gray-700 py-2 px-4 rounded-xl outline-none min-w-[150px]" value={filterCustType} onChange={e => setFilterCustType(e.target.value)}>
-          {custTypes.map(t => <option key={t} value={t}>{t === 'All' ? 'All Cust Types' : t}</option>)}
-        </select>
+        <MultiSelectDropdown label="Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-[140px]" />
+        <MultiSelectDropdown label="Province" options={provinces} selectedValues={filterProv} onChange={setFilterProv} width="w-[140px]" />
+        <MultiSelectDropdown label="Branch" options={branches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-[140px]" />
+        <MultiSelectDropdown label="Service" options={serviceTypes} selectedValues={filterType} onChange={setFilterType} width="w-[140px]" />
+        <MultiSelectDropdown label="Membership" options={memberships} selectedValues={filterMembership} onChange={setFilterMembership} width="w-[140px]" />
+        <MultiSelectDropdown label="Cust Type" options={custTypes} selectedValues={filterCustType} onChange={setFilterCustType} width="w-[140px]" />
         
         <div className="flex-1"></div> {/* Spacer to push buttons to right */}
         

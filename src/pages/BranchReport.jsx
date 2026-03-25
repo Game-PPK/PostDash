@@ -3,6 +3,7 @@ import { AlertTriangle, MapPin, Building, Search, ArrowRight, RefreshCw, FileSpr
 import Select from 'react-select';
 import * as htmlToImage from 'html-to-image';
 import * as XLSX from 'xlsx';
+import MultiSelectDropdown from '../components/MultiSelectDropdown';
 
 const AtRiskCustomers = ({ data }) => {
   const [selectedProvs, setSelectedProvs] = useState([]);
@@ -47,30 +48,18 @@ const AtRiskCustomers = ({ data }) => {
      };
   }, [data]);
 
-  const [filterMonth, setFilterMonth] = useState('');
+  const [filterMonth, setFilterMonth] = useState([]);
   useEffect(() => {
-     if (latestMonth && !filterMonth) setFilterMonth(latestMonth);
+     if (latestMonth && filterMonth.length === 0) setFilterMonth([latestMonth]);
   }, [latestMonth]);
 
-  // Options for react-select
-  const provOptions = allProvinces.map(p => ({value: p, label: p}));
-  
-  // Cascading logic: If province(s) selected, filter branches. Else show all.
-  const branchOptions = useMemo(() => {
-     let availableBranches = allBranches;
-     if (selectedProvs.length > 0) {
-        const provNames = selectedProvs.map(p => p.value);
-        availableBranches = allBranches.filter(b => provNames.includes(branchProvMap[b]));
-     }
-     return availableBranches.map(b => ({value: b, label: b}));
-  }, [allBranches, selectedProvs, branchProvMap]);
+  // Options for react-select removed
 
   // Clean up selected branches if they no longer fit the province filter
   const handleProvChange = (selected) => {
      setSelectedProvs(selected || []);
-     const provNames = (selected || []).map(p => p.value);
-     if (provNames.length > 0) {
-        const newValidBranches = selectedBranches.filter(b => provNames.includes(branchProvMap[b.value]));
+     if ((selected || []).length > 0) {
+        const newValidBranches = selectedBranches.filter(b => selected.includes(branchProvMap[b]));
         setSelectedBranches(newValidBranches);
      }
   };
@@ -79,18 +68,19 @@ const AtRiskCustomers = ({ data }) => {
     setSelectedProvs([]);
     setSelectedBranches([]);
     setSearchTerm('');
-    if (latestMonth) setFilterMonth(latestMonth);
+    if (latestMonth) setFilterMonth([latestMonth]);
   };
 
   // 2. Group data by customer and calculate timeline
   const atRiskCustomers = useMemo(() => {
-    if (!filterMonth) return [];
+    if (filterMonth.length === 0) return [];
     
     const custMap = {};
+    const fm = filterMonth[0]; // For historical analysis, use the first selected month as target
     
     // Parse target month filter limit
     const targetMToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
-    const fmParts = filterMonth.split(' ');
+    const fmParts = fm.split(' ');
     const targetVal = parseInt(fmParts[1] || 0) * 100 + (targetMToNum[fmParts[0]] || 0);
 
     // Filter and Sort chronological
@@ -141,8 +131,8 @@ const AtRiskCustomers = ({ data }) => {
         // Pad the selected month if it's missing (it means revenue was 0 in filterMonth)
         if (cust.monthlyDataArr.length > 0) {
             const lastMth = cust.monthlyDataArr[cust.monthlyDataArr.length - 1].month;
-            if (lastMth !== filterMonth) {
-                cust.monthlyDataArr.push({ month: filterMonth, revenue: 0 });
+            if (fm && lastMth !== fm) {
+                cust.monthlyDataArr.push({ month: fm, revenue: 0 });
             }
         }
     });
@@ -193,8 +183,8 @@ const AtRiskCustomers = ({ data }) => {
 
   const filteredLists = useMemo(() => {
      return atRiskCustomers.filter(c => {
-        if (selectedProvs.length > 0 && !selectedProvs.find(p => p.value === c.province)) return false;
-        if (selectedBranches.length > 0 && !selectedBranches.find(b => b.value === c.branch)) return false;
+        if (selectedProvs.length > 0 && !selectedProvs.includes(c.province)) return false;
+        if (selectedBranches.length > 0 && !selectedBranches.includes(c.branch)) return false;
         if (searchTerm && !c.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
         return true;
      });
@@ -230,12 +220,7 @@ const AtRiskCustomers = ({ data }) => {
       XLSX.writeFile(wb, `AtRisk_Customers_${new Date().getTime()}.xlsx`);
   };
 
-  const selectStyles = {
-      control: (base) => ({ ...base, borderColor: '#e5e7eb', boxShadow: 'none', borderRadius: '0.75rem', minHeight: '42px', cursor: 'pointer', minWidth: '220px', ':hover': { borderColor: '#fca5a5' } }),
-      multiValue: (base) => ({ ...base, backgroundColor: '#fee2e2', borderRadius: '6px' }),
-      multiValueLabel: (base) => ({ ...base, color: '#991b1b', fontWeight: 600 }),
-      multiValueRemove: (base) => ({ ...base, color: '#991b1b', ':hover': { backgroundColor: '#fca5a5', color: '#7f1d1d' } }),
-  };
+  // selectStyles removed
 
   return (
     <div className="space-y-6" ref={reportRef}>
@@ -269,42 +254,9 @@ const AtRiskCustomers = ({ data }) => {
            </div>
         </div>
 
-        <div>
-           <label className="block text-xs font-medium text-gray-500 mb-1">Filter Month</label>
-           <select 
-              value={filterMonth} 
-              onChange={(e) => setFilterMonth(e.target.value)} 
-              className="w-32 bg-gray-50 border border-gray-200 text-gray-800 text-sm font-medium rounded-xl px-3 outline-none focus:ring-2 focus:ring-red-200 h-[42px]"
-           >
-             {monthsList.map(m => <option key={m} value={m}>{m}</option>)}
-           </select>
-        </div>
-
-        <div>
-           <label className="block text-xs font-medium text-gray-500 mb-1">Filter Provinces</label>
-           <Select 
-              isMulti
-              options={provOptions}
-              value={selectedProvs}
-              onChange={handleProvChange}
-              className="text-sm font-medium text-gray-800"
-              placeholder="All Provinces..."
-              styles={selectStyles}
-           />
-        </div>
-        
-        <div>
-           <label className="block text-xs font-medium text-gray-500 mb-1">Filter Branches</label>
-           <Select 
-              isMulti
-              options={branchOptions}
-              value={selectedBranches}
-              onChange={setSelectedBranches}
-              className="text-sm font-medium text-gray-800"
-              placeholder="All Branches..."
-              styles={selectStyles}
-           />
-        </div>
+        <MultiSelectDropdown label="Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-32" />
+        <MultiSelectDropdown label="Provinces" options={allProvinces} selectedValues={selectedProvs} onChange={handleProvChange} width="w-48" />
+        <MultiSelectDropdown label="Branches" options={allBranches.filter(b => selectedProvs.length === 0 || selectedProvs.includes(branchProvMap[b]))} selectedValues={selectedBranches} onChange={setSelectedBranches} width="w-48" />
 
         <button onClick={handleResetFilters} className="flex items-center justify-center text-sm bg-gray-100 border border-gray-200 shadow-sm px-4 py-2 rounded-xl text-gray-700 hover:bg-gray-200 transition-colors h-[42px]">
            <RefreshCw size={16} className="mr-2" /> Reset

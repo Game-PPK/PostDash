@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { MapPin, Calendar, ArrowUpRight, TrendingDown, Package, TrendingUp, Download, Camera, RefreshCw, AlertTriangle, Info, Activity, DollarSign } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
+import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import Select from 'react-select';
 
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F'];
@@ -49,19 +50,18 @@ const CustomerInfo = ({ data }) => {
 
       if (!custMap[name]) {
         custMap[name] = { 
-          name, branch, province: prov, type: row['ประเภทบริการ'], contractEnd, customerType: custType,
+          name, branch, province: prov, contractEnd,
           volumeCriteria: row['volumeCriteria'] || row['เกณฑ์ชิ้นงาน'] || '-',
           membership: row['membership'] || row['ระดับสมาชิก'] || '-',
-          totalRev: 0, totalVol: 0, services: {}, monthlyDataMap: {}, monthlyDataArr: []
+          totalRev: 0, totalVol: 0, services: {}, monthlyDataMap: {}, monthlyDataArr: [],
+          typeRevMap: {}, custTypeRevMap: {}
         };
       } else {
         if (contractEnd && contractEnd !== '-') custMap[name].contractEnd = contractEnd;
-        if (custType && custType !== '-') custMap[name].customerType = custType;
         const vCrit = row['volumeCriteria'] || row['เกณฑ์ชิ้นงาน'];
         if (vCrit && vCrit !== '-' && vCrit !== '0') custMap[name].volumeCriteria = vCrit;
         const memb = row['membership'] || row['ระดับสมาชิก'];
         if (memb && memb !== '-') custMap[name].membership = memb;
-        if (row['ประเภทบริการ'] && row['ประเภทบริการ'] !== '-') custMap[name].type = row['ประเภทบริการ'];
       }
       
       const rev = parseFloat(row['รายได้']) || parseFloat(String(row['รายได้']).replace(/,/g, '')) || 0;
@@ -72,6 +72,14 @@ const CustomerInfo = ({ data }) => {
       
       const srv = row['ชื่อบริการ'];
       custMap[name].services[srv] = (custMap[name].services[srv] || 0) + rev;
+
+      if (custType && custType !== '-') {
+         custMap[name].custTypeRevMap[custType] = (custMap[name].custTypeRevMap[custType] || 0) + rev;
+      }
+      const type = row['ประเภทบริการ'];
+      if (type && type !== '-') {
+         custMap[name].typeRevMap[type] = (custMap[name].typeRevMap[type] || 0) + rev;
+      }
 
       const m = row['เดือน'] || row.month || 'Unknown';
       const y = row['ปี'] || row.year || '2026';
@@ -86,6 +94,20 @@ const CustomerInfo = ({ data }) => {
     });
 
     Object.values(custMap).forEach(cust => {
+        let maxType = '-';
+        let maxTypeRev = -1;
+        for (const [t, r] of Object.entries(cust.typeRevMap)) {
+           if (r > maxTypeRev) { maxTypeRev = r; maxType = t; }
+        }
+        cust.type = maxType;
+
+        let maxCustType = '-';
+        let maxCustTypeRev = -1;
+        for (const [ct, r] of Object.entries(cust.custTypeRevMap)) {
+           if (r > maxCustTypeRev) { maxCustTypeRev = r; maxCustType = ct; }
+        }
+        cust.customerType = maxCustType;
+
         for(let i = 0; i < cust.monthlyDataArr.length; i++) {
            const current = cust.monthlyDataArr[i];
            if (i === 0) {
@@ -111,25 +133,25 @@ const CustomerInfo = ({ data }) => {
     };
   }, [data]);
 
-  const [filterProv, setFilterProv] = useState('All');
-  const [filterMonth, setFilterMonth] = useState('All');
+  const [filterProv, setFilterProv] = useState([]);
+  const [filterMonth, setFilterMonth] = useState([]);
   
   const allBranches = useMemo(() => {
      let available = allBranchesParsed;
-     if (filterProv !== 'All') available = available.filter(b => branchProvMap[b] === filterProv);
+     if (filterProv.length > 0) available = available.filter(b => filterProv.includes(branchProvMap[b]));
      return ['All', ...available];
   }, [allBranchesParsed, filterProv, branchProvMap]);
 
-  const [filterBranch, setFilterBranch] = useState('All');
-  const [filterCustType, setFilterCustType] = useState('All');
-  const [filterContractEnd, setFilterContractEnd] = useState('All');
+  const [filterBranch, setFilterBranch] = useState([]);
+  const [filterCustType, setFilterCustType] = useState([]);
+  const [filterContractEnd, setFilterContractEnd] = useState([]);
   
   const filteredCustomers = useMemo(() => {
     return customers.filter(c => {
-       if (filterProv !== 'All' && c.province !== filterProv) return false;
-       if (filterBranch !== 'All' && c.branch !== filterBranch) return false;
-       if (filterCustType !== 'All' && c.customerType !== filterCustType) return false;
-       if (filterContractEnd !== 'All' && c.contractEnd !== filterContractEnd) return false;
+       if (filterProv.length > 0 && !filterProv.includes(c.province)) return false;
+       if (filterBranch.length > 0 && !filterBranch.includes(c.branch)) return false;
+       if (filterCustType.length > 0 && !filterCustType.includes(c.customerType)) return false;
+       if (filterContractEnd.length > 0 && !filterContractEnd.includes(c.contractEnd)) return false;
        return true;
     });
   }, [customers, filterProv, filterBranch, filterCustType, filterContractEnd]);
@@ -143,11 +165,11 @@ const CustomerInfo = ({ data }) => {
   }, [customerOptions]);
 
   const resetFilters = () => {
-    setFilterProv('All');
-    setFilterBranch('All');
-    setFilterCustType('All');
-    setFilterContractEnd('All');
-    setFilterMonth('All');
+    setFilterProv([]);
+    setFilterBranch([]);
+    setFilterCustType([]);
+    setFilterContractEnd([]);
+    setFilterMonth([]);
     if (customerOptions.length > 0) setSelectedCustNames([customerOptions[0]]);
   };
 
@@ -428,37 +450,11 @@ const CustomerInfo = ({ data }) => {
            </div>
            
            <div className="flex flex-wrap lg:flex-nowrap gap-2 items-end">
-             <div>
-               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Province</label>
-               <select value={filterProv} onChange={(e) => setFilterProv(e.target.value)} className="w-28 bg-gray-50 border border-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1.5 outline-none">
-                 {provinces.map(p => <option key={p} value={p}>{p === 'All' ? 'All' : p}</option>)}
-               </select>
-             </div>
-             <div>
-               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Branch</label>
-               <select value={filterBranch} onChange={(e) => setFilterBranch(e.target.value)} className="w-28 bg-gray-50 border border-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1.5 outline-none">
-                 {allBranches.map(p => <option key={p} value={p}>{p === 'All' ? 'All' : p}</option>)}
-               </select>
-             </div>
-             <div>
-               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Customer Type</label>
-               <select value={filterCustType} onChange={(e) => setFilterCustType(e.target.value)} className="w-28 bg-gray-50 border border-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1.5 outline-none">
-                 {allCustTypes.map(p => <option key={p} value={p}>{p === 'All' ? 'All' : p}</option>)}
-               </select>
-             </div>
-             <div>
-               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-1">Contract End</label>
-               <select value={filterContractEnd} onChange={(e) => setFilterContractEnd(e.target.value)} className="w-28 bg-gray-50 border border-gray-100 text-gray-700 text-xs rounded-lg px-2 py-1.5 outline-none">
-                 {allContractEnds.map(p => <option key={p} value={p}>{p === 'All' ? 'All Exp.' : p}</option>)}
-               </select>
-             </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-indigo-400 uppercase tracking-tighter mb-1">Select Month</label>
-                <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} className="w-36 bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs rounded-lg px-2 py-1.5 outline-none font-bold">
-                  {monthsList.map(m => <option key={m} value={m}>{m === 'All' ? 'Latest Month' : m}</option>)}
-                </select>
-              </div>
+             <MultiSelectDropdown label="Province" options={provinces} selectedValues={filterProv} onChange={setFilterProv} width="w-28" className="flex-shrink-0" />
+             <MultiSelectDropdown label="Branch" options={allBranches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-28" className="flex-shrink-0" />
+             <MultiSelectDropdown label="Type" options={allCustTypes} selectedValues={filterCustType} onChange={setFilterCustType} width="w-28" className="flex-shrink-0" />
+             <MultiSelectDropdown label="Contract" options={allContractEnds} selectedValues={filterContractEnd} onChange={setFilterContractEnd} width="w-28" className="flex-shrink-0" />
+             <MultiSelectDropdown label="Select Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-32" className="flex-shrink-0" />
 
               <button onClick={resetFilters} className="text-[11px] bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-200 h-[32px] font-bold mt-auto leading-none">
                 Reset
@@ -488,7 +484,7 @@ const CustomerInfo = ({ data }) => {
             />
         </div>
 
-        {filterContractEnd !== 'All' && (
+        {filterContractEnd.length > 0 && (
           <div className="bg-orange-50 p-4 rounded-2xl shadow-sm border border-orange-100 mt-4 mb-2 relative z-10">
             <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center">
                <AlertTriangle size={16} className="mr-2" /> รายชื่อลูกค้าที่หมดสัญญาเดือน {filterContractEnd} ทั้งหมด ({filteredCustomers.length} ราย)

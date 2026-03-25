@@ -19,7 +19,7 @@ const CustomerInfo = ({ data }) => {
   const formatNumberFull = (val) => new Intl.NumberFormat('th-TH').format(val || 0);
 
 
-  const { customers, provinces, allBranchesParsed, branchProvMap, allCustTypes, allContractEnds, monthsList } = useMemo(() => {
+  const { customers, provinces, allBranchesParsed, branchProvMap, allCustTypes, allContractEnds, monthsList, yearsList } = useMemo(() => {
     const custMap = {};
     const provSet = new Set();
     const branchSet = new Set();

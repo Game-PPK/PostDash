@@ -504,20 +504,18 @@ const Overview = ({ data }) => {
             <div className={`p-2 rounded-lg ${selectedTrendMetric === 'revenue' ? 'bg-orange-500 text-white' : 'bg-orange-100 text-orange-600'}`}><DollarSign size={20} /></div>
             <h3 className="text-gray-500 font-medium select-none">Total Revenue</h3>
           </div>
-          <div className="flex items-end justify-between">
-            <p className="text-3xl font-bold text-gray-800">{formatCurrency(summary.totalRev)}</p>
-            <div className="flex flex-col items-end gap-1">
-               {moMSummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalRev >= moMSummary.totalRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    MoM {summary.totalRev >= moMSummary.totalRev ? '+' : ''}{moMSummary.totalRev ? (((summary.totalRev - moMSummary.totalRev)/moMSummary.totalRev)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-               {yoySummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalRev >= yoySummary.totalRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
-                    YoY {summary.totalRev >= yoySummary.totalRev ? '+' : ''}{yoySummary.totalRev ? (((summary.totalRev - yoySummary.totalRev)/yoySummary.totalRev)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-            </div>
+          <p className="text-2xl font-bold text-gray-800 mb-2">{formatCurrency(summary.totalRev)}</p>
+          <div className="flex flex-row gap-1.5 flex-wrap">
+             {moMSummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.totalRev >= moMSummary.totalRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  MoM {summary.totalRev >= moMSummary.totalRev ? '+' : ''}{moMSummary.totalRev ? (((summary.totalRev - moMSummary.totalRev)/moMSummary.totalRev)*100).toFixed(1) : 0}%
+               </div>
+             )}
+             {yoySummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.totalRev >= yoySummary.totalRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                  YoY {summary.totalRev >= yoySummary.totalRev ? '+' : ''}{yoySummary.totalRev ? (((summary.totalRev - yoySummary.totalRev)/yoySummary.totalRev)*100).toFixed(1) : 0}%
+               </div>
+             )}
           </div>
         </div>
 
@@ -527,20 +525,18 @@ const Overview = ({ data }) => {
             <div className={`p-2 rounded-lg ${selectedTrendMetric === 'volume' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-600'}`}><Package size={20} /></div>
             <h3 className="text-gray-500 font-medium select-none">Total Volume</h3>
           </div>
-          <div className="flex items-end justify-between">
-             <p className="text-3xl font-bold text-gray-800">{formatNumber(summary.totalVol)} pcs</p>
-             <div className="flex flex-col items-end gap-1">
-               {moMSummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalVol >= moMSummary.totalVol ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    MoM {summary.totalVol >= moMSummary.totalVol ? '+' : ''}{moMSummary.totalVol ? (((summary.totalVol - moMSummary.totalVol)/moMSummary.totalVol)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-               {yoySummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalVol >= yoySummary.totalVol ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
-                    YoY {summary.totalVol >= yoySummary.totalVol ? '+' : ''}{yoySummary.totalVol ? (((summary.totalVol - yoySummary.totalVol)/yoySummary.totalVol)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-            </div>
+          <p className="text-2xl font-bold text-gray-800 mb-2">{formatNumber(summary.totalVol)} pcs</p>
+          <div className="flex flex-row gap-1.5 flex-wrap">
+             {moMSummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.totalVol >= moMSummary.totalVol ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  MoM {summary.totalVol >= moMSummary.totalVol ? '+' : ''}{moMSummary.totalVol ? (((summary.totalVol - moMSummary.totalVol)/moMSummary.totalVol)*100).toFixed(1) : 0}%
+               </div>
+             )}
+             {yoySummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.totalVol >= yoySummary.totalVol ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                  YoY {summary.totalVol >= yoySummary.totalVol ? '+' : ''}{yoySummary.totalVol ? (((summary.totalVol - yoySummary.totalVol)/yoySummary.totalVol)*100).toFixed(1) : 0}%
+               </div>
+             )}
           </div>
         </div>
 
@@ -550,20 +546,18 @@ const Overview = ({ data }) => {
              <div className={`p-2 rounded-lg ${selectedTrendMetric === 'avgRev' ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-600'}`}><Activity size={20} /></div>
              <h3 className="text-gray-500 font-medium select-none">Avg Rev/Piece</h3>
            </div>
-           <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold text-gray-800">{formatCurrency(summary.avgRev)}</p>
-              <div className="flex flex-col items-end gap-1">
-               {moMSummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.avgRev >= moMSummary.avgRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    MoM {summary.avgRev >= moMSummary.avgRev ? '+' : ''}{moMSummary.avgRev ? (((summary.avgRev - moMSummary.avgRev)/moMSummary.avgRev)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-               {yoySummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.avgRev >= yoySummary.avgRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
-                    YoY {summary.avgRev >= yoySummary.avgRev ? '+' : ''}{yoySummary.avgRev ? (((summary.avgRev - yoySummary.avgRev)/yoySummary.avgRev)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-            </div>
+           <p className="text-2xl font-bold text-gray-800 mb-2">{formatCurrency(summary.avgRev)}</p>
+           <div className="flex flex-row gap-1.5 flex-wrap">
+             {moMSummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.avgRev >= moMSummary.avgRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  MoM {summary.avgRev >= moMSummary.avgRev ? '+' : ''}{moMSummary.avgRev ? (((summary.avgRev - moMSummary.avgRev)/moMSummary.avgRev)*100).toFixed(1) : 0}%
+               </div>
+             )}
+             {yoySummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.avgRev >= yoySummary.avgRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                  YoY {summary.avgRev >= yoySummary.avgRev ? '+' : ''}{yoySummary.avgRev ? (((summary.avgRev - yoySummary.avgRev)/yoySummary.avgRev)*100).toFixed(1) : 0}%
+               </div>
+             )}
            </div>
         </div>
 
@@ -573,20 +567,18 @@ const Overview = ({ data }) => {
             <div className={`p-2 rounded-lg ${selectedTrendMetric === 'accounts' ? 'bg-green-500 text-white' : 'bg-green-100 text-green-600'}`}><Users size={20} /></div>
             <h3 className="text-gray-500 font-medium select-none">Active Accounts</h3>
           </div>
-          <div className="flex items-end justify-between">
-             <p className="text-3xl font-bold text-gray-800">{formatNumber(summary.activeAccounts)}</p>
-             <div className="flex flex-col items-end gap-1">
-               {moMSummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.activeAccounts >= moMSummary.activeAccounts ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    MoM {summary.activeAccounts >= moMSummary.activeAccounts ? '+' : ''}{moMSummary.activeAccounts ? (((summary.activeAccounts - moMSummary.activeAccounts)/moMSummary.activeAccounts)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-               {yoySummary && (
-                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.activeAccounts >= yoySummary.activeAccounts ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
-                    YoY {summary.activeAccounts >= yoySummary.activeAccounts ? '+' : ''}{yoySummary.activeAccounts ? (((summary.activeAccounts - yoySummary.activeAccounts)/yoySummary.activeAccounts)*100).toFixed(1) : 0}%
-                 </div>
-               )}
-             </div>
+          <p className="text-2xl font-bold text-gray-800 mb-2">{formatNumber(summary.activeAccounts)}</p>
+          <div className="flex flex-row gap-1.5 flex-wrap">
+             {moMSummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.activeAccounts >= moMSummary.activeAccounts ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  MoM {summary.activeAccounts >= moMSummary.activeAccounts ? '+' : ''}{moMSummary.activeAccounts ? (((summary.activeAccounts - moMSummary.activeAccounts)/moMSummary.activeAccounts)*100).toFixed(1) : 0}%
+               </div>
+             )}
+             {yoySummary && (
+               <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${summary.activeAccounts >= yoySummary.activeAccounts ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                  YoY {summary.activeAccounts >= yoySummary.activeAccounts ? '+' : ''}{yoySummary.activeAccounts ? (((summary.activeAccounts - yoySummary.activeAccounts)/yoySummary.activeAccounts)*100).toFixed(1) : 0}%
+               </div>
+             )}
           </div>
         </div>
 
@@ -731,13 +723,13 @@ const Overview = ({ data }) => {
                   <Legend iconType="circle" />
                   {selectedTrendMetric === 'revenue' && (trendChartType === 'line' ? 
                      <>
-                        <Line type="monotone" dataKey="prevRevenue" name="Last Year" stroke="#ff7f50" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="5 5" dot={false} activeDot={false} />
+                        <Line type="monotone" dataKey="prevRevenue" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
                         <Line type="monotone" dataKey="revenue" name="This Year" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}}>
                            <LabelList dataKey="revenue" position="top" offset={15} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
                         </Line>
                      </> : 
                      <>
-                        <Bar dataKey="prevRevenue" name="Last Year" fill="#ff7f50" fillOpacity={0.3} radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="prevRevenue" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
                         <Bar dataKey="revenue" name="This Year" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={20}>
                            <LabelList dataKey="revenue" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
                         </Bar>
@@ -747,22 +739,22 @@ const Overview = ({ data }) => {
                   
                   {selectedTrendMetric === 'volume' && (trendChartType === 'line' ? 
                      <>
-                        <Line type="monotone" dataKey="prevVolume" name="Last Year" stroke="#3b82f6" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="5 5" dot={false} activeDot={false} />
+                        <Line type="monotone" dataKey="prevVolume" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
                         <Line type="monotone" dataKey="volume" name="This Year" stroke="#3b82f6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
                      </> : 
                      <>
-                        <Bar dataKey="prevVolume" name="Last Year" fill="#3b82f6" fillOpacity={0.3} radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="prevVolume" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
                         <Bar dataKey="volume" name="This Year" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={20} />
                      </>
                   )}
                   
                   {selectedTrendMetric === 'accounts' && (trendChartType === 'line' ? 
                      <>
-                        <Line type="monotone" dataKey="prevActiveAccounts" name="Last Year" stroke="#10b981" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="5 5" dot={false} activeDot={false} />
+                        <Line type="monotone" dataKey="prevActiveAccounts" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
                         <Line type="monotone" dataKey="activeAccounts" name="This Year" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
                      </> : 
                      <>
-                        <Bar dataKey="prevActiveAccounts" name="Last Year" fill="#10b981" fillOpacity={0.3} radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="prevActiveAccounts" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
                         <Bar dataKey="activeAccounts" name="This Year" fill="#10b981" radius={[6, 6, 0, 0]} barSize={20} />
                      </>
                   )}

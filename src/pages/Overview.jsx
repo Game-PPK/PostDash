@@ -13,6 +13,7 @@ const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F'
 const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 
 const Overview = ({ data }) => {
+  const [filterYear, setFilterYear] = useState([]);
   const [filterProv, setFilterProv] = useState([]);
   const [filterType, setFilterType] = useState([]);
   const [filterBranch, setFilterBranch] = useState([]);
@@ -29,6 +30,7 @@ const Overview = ({ data }) => {
   const formatNumberCompact = (val) => new Intl.NumberFormat('th-TH', {notation: "compact", compactDisplay: "short"}).format(val || 0);
 
   const handleResetFilters = () => {
+    setFilterYear([]);
     setFilterProv([]);
     setFilterType([]);
     setFilterBranch([]);
@@ -62,6 +64,10 @@ const Overview = ({ data }) => {
   }, [data, filterProv]);
   const memberships = useMemo(() => ['All', ...Array.from(new Set(data.map(r => r.membership).filter((v) => v && v !== '-'))).sort()], [data]);
   const custTypes = useMemo(() => ['All', ...Array.from(new Set(data.map(r => r.customerType).filter((v) => v && v !== '-'))).sort()], [data]);
+  const yearsList = useMemo(() => {
+     const set = new Set(data.map(r => r['ปี'] || r.year || '2026').filter(Boolean));
+     return ['All', ...Array.from(set).sort((a,b) => parseInt(b) - parseInt(a))];
+  }, [data]);
   const monthsList = useMemo(() => {
      const set = new Set(data.map(r => r['เดือน'] || r.month).filter(Boolean));
      return ['All', ...Array.from(set).sort((a,b) => (mToNum[a] || 0) - (mToNum[b] || 0))];
@@ -69,6 +75,8 @@ const Overview = ({ data }) => {
 
   const filteredData = useMemo(() => {
     return data.filter(r => {
+      const y = String(r['ปี'] || r.year || '2026');
+      if (filterYear.length > 0 && !filterYear.includes(y)) return false;
       const mn = r['เดือน'] || r.month;
       if (filterMonth.length > 0 && !filterMonth.includes(mn)) return false;
       if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
@@ -79,7 +87,7 @@ const Overview = ({ data }) => {
       if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return false;
       return true;
     });
-  }, [data, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType]);
+  }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType]);
 
   // --- Calculations ---
   const latestDate = useMemo(() => {
@@ -133,85 +141,184 @@ const Overview = ({ data }) => {
     };
   }, [filteredData]);
 
-  const prevSummary = useMemo(() => {
-    if (filterMonth === 'All') return null;
-    const currentIdx = monthsList.indexOf(filterMonth);
-    if (currentIdx <= 1) return null; // No previous month available in list
-    const prevMonthName = monthsList[currentIdx - 1];
+  const yoySummary = useMemo(() => {
+     let targetYears = filterYear;
+     if (targetYears.length === 0) {
+        const maxYearStr = yearsList[1];
+        if (maxYearStr) targetYears = [maxYearStr];
+     }
+     
+     const prevYears = targetYears.map(y => String(parseInt(y) - 1));
+     
+     const pData = data.filter(r => {
+        const y = String(r['ปี'] || r.year || '2026');
+        if (!prevYears.includes(y)) return false;
+        
+        const mn = r['เดือน'] || r.month;
+        if (filterMonth.length > 0 && !filterMonth.includes(mn)) return false;
+        if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+        if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+        const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+        if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
+        if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
+        if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return false;
+        return true;
+     });
 
-    const prevFilteredData = data.filter(r => {
-      const mn = r['เดือน'] || r.month;
-      if (mn !== prevMonthName) return false;
-      if (filterProv !== 'All' && r['จังหวัด'] !== filterProv) return false;
-      if (filterType !== 'All' && r['ประเภทบริการ'] !== filterType) return false;
-      const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
-      if (filterBranch !== 'All' && b !== filterBranch) return false;
-      if (filterMembership !== 'All' && r.membership !== filterMembership) return false;
-      if (filterCustType !== 'All' && r.customerType !== filterCustType) return false;
-      return true;
-    });
+     let totalRev = 0; let totalVol = 0; const activeAccounts = new Set();
+     pData.forEach(row => {
+        totalRev += row['รายได้'] || 0;
+        totalVol += row['ชิ้นงาน'] || 0;
+        if (row['ชื่อบัญชี']) activeAccounts.add(row['ชื่อบัญชี']);
+     });
+     
+     if (pData.length === 0) return null; 
+     
+     return {
+        totalRev, totalVol, activeAccounts: activeAccounts.size, avgRev: totalVol ? totalRev / totalVol : 0
+     };
+  }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, yearsList]);
 
-    let totalRev = 0; let totalVol = 0; const activeAccounts = new Set();
-    prevFilteredData.forEach(row => {
-      totalRev += parseFloat(row['รายได้']) || parseFloat(String(row['รายได้']).replace(/,/g, '')) || 0;
-      totalVol += parseInt(row['ชิ้นงาน']) || parseInt(String(row['ชิ้นงาน']).replace(/,/g, '')) || 0;
-      if (row['ชื่อบัญชี']) activeAccounts.add(row['ชื่อบัญชี']);
-    });
-    
-    return {
-      totalRev, totalVol, activeAccounts: activeAccounts.size, avgRev: totalVol ? totalRev / totalVol : 0
-    };
-  }, [data, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, monthsList]);
+  const moMSummary = useMemo(() => {
+     let tYear, tMonthText;
+     if (filterYear.length === 1 && filterMonth.length === 1) {
+        tYear = parseInt(filterYear[0]);
+        tMonthText = filterMonth[0];
+     } else {
+        let maxNum = 0;
+        let latestRow = null;
+        filteredData.forEach(r => {
+           const y = parseInt(r['ปี'] || r.year || 2026);
+           const m = mToNum[r['เดือน'] || r.month] || 0;
+           if (y*100+m > maxNum) { maxNum = y*100+m; latestRow = r; }
+        });
+        if (!latestRow) return null;
+        tYear = parseInt(latestRow['ปี'] || latestRow.year || 2026);
+        tMonthText = latestRow['เดือน'] || latestRow.month;
+     }
+     
+     const mNum = mToNum[tMonthText];
+     if (!mNum) return null;
+     
+     let pYear = tYear;
+     let pMonthNum = mNum - 1;
+     if (pMonthNum === 0) {
+        pMonthNum = 12;
+        pYear -= 1;
+     }
+     const pMonthText = Object.keys(mToNum).find(k => mToNum[k] === pMonthNum);
+     
+     const pData = data.filter(r => {
+        const y = parseInt(r['ปี'] || r.year || 2026);
+        const mn = r['เดือน'] || r.month;
+        if (y !== pYear || mn !== pMonthText) return false;
+        if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+        if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+        const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+        if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
+        if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
+        if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return false;
+        return true;
+     });
+
+     let totalRev = 0; let totalVol = 0; const activeAccounts = new Set();
+     pData.forEach(row => {
+        totalRev += row['รายได้'] || 0;
+        totalVol += row['ชิ้นงาน'] || 0;
+        if (row['ชื่อบัญชี']) activeAccounts.add(row['ชื่อบัญชี']);
+     });
+     
+     if (pData.length === 0) return null; 
+
+     return {
+        totalRev, totalVol, activeAccounts: activeAccounts.size, avgRev: totalVol ? totalRev / totalVol : 0
+     };
+  }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, filteredData]);
 
   const trendData = useMemo(() => {
+     let primaryYears = filterYear;
+     if (primaryYears.length === 0) {
+        const maxYearStr = yearsList[1];
+        primaryYears = maxYearStr ? [maxYearStr] : ['2026'];
+     }
+     const prevYears = primaryYears.map(y => String(parseInt(y) - 1));
+
+     const validMonths = filterMonth.length > 0 ? filterMonth : Object.keys(mToNum);
+     
      const mMap = {};
-     filteredData.forEach(r => {
-        const m = r['เดือน'] || r.month;
-        if (!m) return;
-        if (!mMap[m]) mMap[m] = { name: m, revenue: 0, volume: 0, activeSet: new Set() };
-        mMap[m].revenue += parseFloat(r['รายได้']) || parseFloat(String(r['รายได้']).replace(/,/g, '')) || 0;
-        mMap[m].volume += parseInt(r['ชิ้นงาน']) || parseInt(String(r['ชิ้นงาน']).replace(/,/g, '')) || 0;
-        if (r['ชื่อบัญชี']) mMap[m].activeSet.add(r['ชื่อบัญชี']);
+     validMonths.forEach(m => {
+        mMap[m] = { name: m, revenue: 0, volume: 0, prevRevenue: 0, prevVolume: 0, activeSet: new Set(), prevActiveSet: new Set() };
      });
-     return Object.values(mMap).map(m => ({ ...m, activeAccounts: m.activeSet.size })).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
-  }, [filteredData]);
+
+     data.forEach(r => {
+        const m = r['เดือน'] || r.month;
+        if (!m || !mMap[m]) return;
+        
+        if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return;
+        if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return;
+        const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+        if (filterBranch.length > 0 && !filterBranch.includes(b)) return;
+        if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return;
+        if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return;
+        
+        const y = String(r['ปี'] || r.year || '2026');
+        const rev = parseFloat(r['รายได้']) || parseFloat(String(r['รายได้']).replace(/,/g, '')) || 0;
+        const vol = parseInt(r['ชิ้นงาน']) || parseInt(String(r['ชิ้นงาน']).replace(/,/g, '')) || 0;
+
+        if (primaryYears.includes(y)) {
+           mMap[m].revenue += rev;
+           mMap[m].volume += vol;
+           if (r['ชื่อบัญชี']) mMap[m].activeSet.add(r['ชื่อบัญชี']);
+        } else if (prevYears.includes(y)) {
+           mMap[m].prevRevenue += rev;
+           mMap[m].prevVolume += vol;
+           if (r['ชื่อบัญชี']) mMap[m].prevActiveSet.add(r['ชื่อบัญชี']);
+        }
+     });
+
+     return Object.values(mMap).map(m => ({ 
+         ...m, 
+         activeAccounts: m.activeSet.size, 
+         prevActiveAccounts: m.prevActiveSet.size 
+     })).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
+  }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, yearsList]);
 
   const aiInsights = useMemo(() => {
      let current = null;
      let previous = null;
      
-     if (filterMonth.length === 0) {
-         const sorted = trendData;
-         if (sorted.length >= 1) current = sorted[sorted.length - 1];
-         if (sorted.length >= 2) previous = sorted[sorted.length - 2];
-     } else {
-         const sorted = trendData;
-         if (sorted.length >= 1) {
-            current = sorted[sorted.length - 1];
-            const targetM = current.name;
-            const currentIdx = monthsList.indexOf(targetM);
-            
-            if (currentIdx > 1) {
-               const prevMonthName = monthsList[currentIdx - 1];
-               const prevData = data.filter(r => {
-                  const mn = r['เดือน'] || r.month;
-                  if (mn !== prevMonthName) return false;
-                  if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
-                  if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
-                  const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
-                  if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
-                  return true;
-               });
-               
-               let pRev = 0; let pVol = 0; let pAccSet = new Set();
-               prevData.forEach(r => {
-                  pRev += parseFloat(r['รายได้']) || parseFloat(String(r['รายได้']).replace(/,/g, '')) || 0;
-                  pVol += parseInt(r['ชิ้นงาน']) || parseInt(String(r['ชิ้นงาน']).replace(/,/g, '')) || 0;
-                  if (r['ชื่อบัญชี']) pAccSet.add(r['ชื่อบัญชี']);
-               });
-               previous = { revenue: pRev, volume: pVol, activeAccounts: pAccSet.size };
-            }
-         }
+     const populatedData = trendData.filter(d => d.revenue > 0 || d.volume > 0);
+     if (populatedData.length === 0) return null;
+
+     current = populatedData[populatedData.length - 1];
+     const targetM = current.name;
+     const currentMonthNum = mToNum[targetM];
+     
+     if (currentMonthNum > 1) {
+        let pYear = parseInt(filterYear.length === 1 ? filterYear[0] : (yearsList[1] || '2026'));
+        let pMonthNum = currentMonthNum - 1;
+        const prevMonthName = Object.keys(mToNum).find(k => mToNum[k] === pMonthNum);
+
+        const prevData = data.filter(r => {
+           const y = parseInt(r['ปี'] || r.year || 2026);
+           const mn = r['เดือน'] || r.month;
+           if (y !== pYear || mn !== prevMonthName) return false;
+           if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+           if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+           const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+           if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
+           if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
+           if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return false;
+           return true;
+        });
+        
+        let pRev = 0; let pVol = 0; let pAccSet = new Set();
+        prevData.forEach(r => {
+           pRev += parseFloat(r['รายได้']) || parseFloat(String(r['รายได้']).replace(/,/g, '')) || 0;
+           pVol += parseInt(r['ชิ้นงาน']) || parseInt(String(r['ชิ้นงาน']).replace(/,/g, '')) || 0;
+           if (r['ชื่อบัญชี']) pAccSet.add(r['ชื่อบัญชี']);
+        });
+        previous = { revenue: pRev, volume: pVol, activeAccounts: pAccSet.size };
      }
 
      if (!current) return null;
@@ -358,12 +465,13 @@ const Overview = ({ data }) => {
       {/* Filters */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-wrap gap-4 items-center">
         <div className="flex items-center text-gray-500 font-medium mr-2"><Filter size={18} className="mr-2"/> Filters:</div>
-        <MultiSelectDropdown label="Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-[140px]" />
-        <MultiSelectDropdown label="Province" options={provinces} selectedValues={filterProv} onChange={setFilterProv} width="w-[140px]" />
-        <MultiSelectDropdown label="Branch" options={branches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-[140px]" />
-        <MultiSelectDropdown label="Service" options={serviceTypes} selectedValues={filterType} onChange={setFilterType} width="w-[140px]" />
-        <MultiSelectDropdown label="Membership" options={memberships} selectedValues={filterMembership} onChange={setFilterMembership} width="w-[140px]" />
-        <MultiSelectDropdown label="Cust Type" options={custTypes} selectedValues={filterCustType} onChange={setFilterCustType} width="w-[140px]" />
+        <MultiSelectDropdown label="Year" options={yearsList} selectedValues={filterYear} onChange={setFilterYear} width="w-[100px]" />
+        <MultiSelectDropdown label="Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-[120px]" />
+        <MultiSelectDropdown label="Province" options={provinces} selectedValues={filterProv} onChange={setFilterProv} width="w-[120px]" />
+        <MultiSelectDropdown label="Branch" options={branches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-[120px]" />
+        <MultiSelectDropdown label="Service" options={serviceTypes} selectedValues={filterType} onChange={setFilterType} width="w-[120px]" />
+        <MultiSelectDropdown label="Membership" options={memberships} selectedValues={filterMembership} onChange={setFilterMembership} width="w-[120px]" />
+        <MultiSelectDropdown label="Cust Type" options={custTypes} selectedValues={filterCustType} onChange={setFilterCustType} width="w-[120px]" />
         
         <div className="flex-1"></div> {/* Spacer to push buttons to right */}
         
@@ -398,11 +506,18 @@ const Overview = ({ data }) => {
           </div>
           <div className="flex items-end justify-between">
             <p className="text-3xl font-bold text-gray-800">{formatCurrency(summary.totalRev)}</p>
-            {prevSummary && (
-               <div className={`text-xs font-bold px-2 py-1 rounded-md mb-1 ${summary.totalRev >= prevSummary.totalRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {summary.totalRev >= prevSummary.totalRev ? '+' : ''}{prevSummary.totalRev ? (((summary.totalRev - prevSummary.totalRev)/prevSummary.totalRev)*100).toFixed(1) : 0}%
-               </div>
-            )}
+            <div className="flex flex-col items-end gap-1">
+               {moMSummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalRev >= moMSummary.totalRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    MoM {summary.totalRev >= moMSummary.totalRev ? '+' : ''}{moMSummary.totalRev ? (((summary.totalRev - moMSummary.totalRev)/moMSummary.totalRev)*100).toFixed(1) : 0}%
+                 </div>
+               )}
+               {yoySummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalRev >= yoySummary.totalRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                    YoY {summary.totalRev >= yoySummary.totalRev ? '+' : ''}{yoySummary.totalRev ? (((summary.totalRev - yoySummary.totalRev)/yoySummary.totalRev)*100).toFixed(1) : 0}%
+                 </div>
+               )}
+            </div>
           </div>
         </div>
 
@@ -414,11 +529,18 @@ const Overview = ({ data }) => {
           </div>
           <div className="flex items-end justify-between">
              <p className="text-3xl font-bold text-gray-800">{formatNumber(summary.totalVol)} pcs</p>
-             {prevSummary && (
-               <div className={`text-xs font-bold px-2 py-1 rounded-md mb-1 ${summary.totalVol >= prevSummary.totalVol ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {summary.totalVol >= prevSummary.totalVol ? '+' : ''}{prevSummary.totalVol ? (((summary.totalVol - prevSummary.totalVol)/prevSummary.totalVol)*100).toFixed(1) : 0}%
-               </div>
-             )}
+             <div className="flex flex-col items-end gap-1">
+               {moMSummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalVol >= moMSummary.totalVol ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    MoM {summary.totalVol >= moMSummary.totalVol ? '+' : ''}{moMSummary.totalVol ? (((summary.totalVol - moMSummary.totalVol)/moMSummary.totalVol)*100).toFixed(1) : 0}%
+                 </div>
+               )}
+               {yoySummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.totalVol >= yoySummary.totalVol ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                    YoY {summary.totalVol >= yoySummary.totalVol ? '+' : ''}{yoySummary.totalVol ? (((summary.totalVol - yoySummary.totalVol)/yoySummary.totalVol)*100).toFixed(1) : 0}%
+                 </div>
+               )}
+            </div>
           </div>
         </div>
 
@@ -430,11 +552,18 @@ const Overview = ({ data }) => {
            </div>
            <div className="flex items-end justify-between">
               <p className="text-3xl font-bold text-gray-800">{formatCurrency(summary.avgRev)}</p>
-              {prevSummary && (
-                 <div className={`text-xs font-bold px-2 py-1 rounded-md mb-1 ${summary.avgRev >= prevSummary.avgRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {summary.avgRev >= prevSummary.avgRev ? '+' : ''}{prevSummary.avgRev ? (((summary.avgRev - prevSummary.avgRev)/prevSummary.avgRev)*100).toFixed(1) : 0}%
+              <div className="flex flex-col items-end gap-1">
+               {moMSummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.avgRev >= moMSummary.avgRev ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    MoM {summary.avgRev >= moMSummary.avgRev ? '+' : ''}{moMSummary.avgRev ? (((summary.avgRev - moMSummary.avgRev)/moMSummary.avgRev)*100).toFixed(1) : 0}%
                  </div>
-              )}
+               )}
+               {yoySummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.avgRev >= yoySummary.avgRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                    YoY {summary.avgRev >= yoySummary.avgRev ? '+' : ''}{yoySummary.avgRev ? (((summary.avgRev - yoySummary.avgRev)/yoySummary.avgRev)*100).toFixed(1) : 0}%
+                 </div>
+               )}
+            </div>
            </div>
         </div>
 
@@ -540,21 +669,49 @@ const Overview = ({ data }) => {
                   <Tooltip 
                       content={({ active, payload, label }) => {
                          if (active && payload && payload.length) {
-                            const idx = trendData.findIndex(d => d.name === label);
-                            const prev = idx > 0 ? trendData[idx - 1] : null;
-                            let val = payload[0].value;
-                            let prevVal = prev ? (selectedTrendMetric === 'revenue' ? prev.revenue : selectedTrendMetric === 'volume' ? prev.volume : selectedTrendMetric === 'accounts' ? prev.activeAccounts : (prev.volume ? prev.revenue/prev.volume : 0)) : null;
-                            let pct = prevVal ? (((val - prevVal)/prevVal)*100).toFixed(1) : null;
+                            const d = payload[0].payload;
+                            let val = selectedTrendMetric === 'revenue' ? d.revenue : selectedTrendMetric === 'volume' ? d.volume : selectedTrendMetric === 'accounts' ? d.activeAccounts : (d.volume ? d.revenue/d.volume : 0);
+                            let prevVal = selectedTrendMetric === 'revenue' ? d.prevRevenue : selectedTrendMetric === 'volume' ? d.prevVolume : selectedTrendMetric === 'accounts' ? d.prevActiveAccounts : (d.prevVolume ? d.prevRevenue/d.prevVolume : 0);
+                            
+                            let yoyPct = prevVal ? (((val - prevVal)/prevVal)*100).toFixed(1) : null;
                             let formattedVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(val) : formatNumber(val);
+                            let formattedPrevVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(prevVal) : formatNumber(prevVal);
+                            
+                            const idx = trendData.findIndex(x => x.name === label);
+                            const prevM = idx > 0 ? trendData[idx - 1] : null;
+                            let prevMoMVal = prevM ? (selectedTrendMetric === 'revenue' ? prevM.revenue : selectedTrendMetric === 'volume' ? prevM.volume : selectedTrendMetric === 'accounts' ? prevM.activeAccounts : (prevM.volume ? prevM.revenue/prevM.volume : 0)) : null;
+                            let momPct = prevMoMVal ? (((val - prevMoMVal)/prevMoMVal)*100).toFixed(1) : null;
+
                             return (
-                               <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100">
-                                  <p className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-2 border-b border-gray-50 pb-2">{label}</p>
-                                  <div className="flex items-center gap-3">
-                                     <span className="text-lg font-black text-gray-900">{formattedVal}</span>
-                                     {pct !== null && (
-                                        <span className={`text-[11px] font-black px-2 py-0.5 rounded-lg ${pct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                                           {pct >= 0 ? '▲' : '▼'} {Math.abs(pct)}%
-                                        </span>
+                               <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 min-w-[200px]">
+                                  <p className="font-bold text-gray-400 text-[10px] uppercase tracking-widest mb-3 border-b border-gray-50 pb-2">{label}</p>
+                                  
+                                  <div className="flex justify-between items-center mb-2">
+                                     <span className="text-xs text-slate-500 font-medium">This Year</span>
+                                     <span className="text-sm font-black text-gray-900">{formattedVal}</span>
+                                  </div>
+                                  
+                                  <div className="flex justify-between items-center mb-3">
+                                     <span className="text-xs text-slate-400">Last Year</span>
+                                     <span className="text-xs font-bold text-slate-500">{formattedPrevVal}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+                                     {momPct !== null && (
+                                        <div className="flex flex-col">
+                                           <span className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">MoM</span>
+                                           <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${momPct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                              {momPct >= 0 ? '▲' : '▼'} {Math.abs(momPct)}%
+                                           </span>
+                                        </div>
+                                     )}
+                                     {yoyPct !== null && (
+                                        <div className="flex flex-col ml-auto text-right">
+                                           <span className="text-[9px] text-gray-400 uppercase tracking-wider mb-0.5">YoY</span>
+                                           <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${yoyPct >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
+                                              {yoyPct >= 0 ? '▲' : '▼'} {Math.abs(yoyPct)}%
+                                           </span>
+                                        </div>
                                      )}
                                   </div>
                                </div>
@@ -566,23 +723,41 @@ const Overview = ({ data }) => {
                   />
                   <Legend iconType="circle" />
                   {selectedTrendMetric === 'revenue' && (trendChartType === 'line' ? 
-                     <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}}>
-                        <LabelList dataKey="revenue" position="top" offset={15} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
-                     </Line> : 
-                     <Bar dataKey="revenue" name="Revenue" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={40}>
-                        <LabelList dataKey="revenue" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
-                     </Bar>
+                     <>
+                        <Line type="monotone" dataKey="prevRevenue" name="Last Year" stroke="#ff7f50" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="5 5" dot={false} activeDot={false} />
+                        <Line type="monotone" dataKey="revenue" name="This Year" stroke="#ff7f50" strokeWidth={4} dot={{r: 4, fill: '#ff7f50', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 7}}>
+                           <LabelList dataKey="revenue" position="top" offset={15} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
+                        </Line>
+                     </> : 
+                     <>
+                        <Bar dataKey="prevRevenue" name="Last Year" fill="#ff7f50" fillOpacity={0.3} radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="revenue" name="This Year" fill="#ff7f50" radius={[6, 6, 0, 0]} barSize={20}>
+                           <LabelList dataKey="revenue" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#ff7f50', fontSize: 10, fontWeight: 'bold'}} />
+                        </Bar>
+                     </>
                   )}
                   {selectedTrendMetric === 'revenue' && <ReferenceLine y={0} stroke="#e5e7eb" />}
                   
                   {selectedTrendMetric === 'volume' && (trendChartType === 'line' ? 
-                     <Line type="monotone" dataKey="volume" name="Volume" stroke="#3b82f6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} /> : 
-                     <Bar dataKey="volume" name="Volume" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40} />
+                     <>
+                        <Line type="monotone" dataKey="prevVolume" name="Last Year" stroke="#3b82f6" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="5 5" dot={false} activeDot={false} />
+                        <Line type="monotone" dataKey="volume" name="This Year" stroke="#3b82f6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
+                     </> : 
+                     <>
+                        <Bar dataKey="prevVolume" name="Last Year" fill="#3b82f6" fillOpacity={0.3} radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="volume" name="This Year" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={20} />
+                     </>
                   )}
                   
                   {selectedTrendMetric === 'accounts' && (trendChartType === 'line' ? 
-                     <Line type="monotone" dataKey="activeAccounts" name="Accounts" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} /> : 
-                     <Bar dataKey="activeAccounts" name="Accounts" fill="#10b981" radius={[6, 6, 0, 0]} barSize={40} />
+                     <>
+                        <Line type="monotone" dataKey="prevActiveAccounts" name="Last Year" stroke="#10b981" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="5 5" dot={false} activeDot={false} />
+                        <Line type="monotone" dataKey="activeAccounts" name="This Year" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
+                     </> : 
+                     <>
+                        <Bar dataKey="prevActiveAccounts" name="Last Year" fill="#10b981" fillOpacity={0.3} radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="activeAccounts" name="This Year" fill="#10b981" radius={[6, 6, 0, 0]} barSize={20} />
+                     </>
                   )}
                   
                   {selectedTrendMetric === 'avgRev' && (trendChartType === 'line' ? 

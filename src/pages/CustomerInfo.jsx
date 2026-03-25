@@ -129,10 +129,12 @@ const CustomerInfo = ({ data }) => {
       ),
       allCustTypes: ['All', ...Array.from(custTypeSet).sort()],
       allContractEnds: ['All', ...Array.from(contractEndSet).sort()],
-      monthsList: ['All', ...Array.from(new Set(sortedData.map(r => `${r['เดือน'] || r.month} ${r['ปี'] || r.year}`))) ]
+      yearsList: ['All', ...Array.from(new Set(sortedData.map(r => String(r['ปี'] || r.year || '2026')).filter(Boolean))).sort((a,b) => parseInt(b) - parseInt(a))],
+      monthsList: ['All', ...Array.from(new Set(sortedData.map(r => r['เดือน'] || r.month).filter(Boolean))).sort((a,b) => (mToNum[a] || 0) - (mToNum[b] || 0))]
     };
   }, [data]);
 
+  const [filterYear, setFilterYear] = useState([]);
   const [filterProv, setFilterProv] = useState([]);
   const [filterMonth, setFilterMonth] = useState([]);
   
@@ -165,6 +167,7 @@ const CustomerInfo = ({ data }) => {
   }, [customerOptions]);
 
   const resetFilters = () => {
+    setFilterYear([]);
     setFilterProv([]);
     setFilterBranch([]);
     setFilterCustType([]);
@@ -235,11 +238,54 @@ const CustomerInfo = ({ data }) => {
      return isNaN(parsed) || parsed === 0 ? null : parsed;
   }, [cust]);
 
+  const filteredMetrics = useMemo(() => {
+     if (!cust) return null;
+     let targetYears = filterYear;
+     if (targetYears.length === 0) {
+        const maxYearStr = yearsList[1];
+        targetYears = maxYearStr ? [maxYearStr] : ['2026'];
+     }
+     const prevYears = targetYears.map(y => String(parseInt(y) - 1));
+     
+     let rev = 0; let vol = 0;
+     let prevRev = 0; let prevVol = 0;
+     
+     cust.monthlyDataArr.forEach(m => {
+        if (filterMonth.length > 0 && !filterMonth.includes(m.mText)) return;
+        if (targetYears.includes(m.yearText)) { rev += m.revenue; vol += m.volume; }
+        else if (prevYears.includes(m.yearText)) { prevRev += m.revenue; prevVol += m.volume; }
+     });
+     
+     return { rev, vol, avg: vol ? rev/vol : 0, prevRev, prevVol, prevAvg: prevVol ? prevRev/prevVol : 0 };
+  }, [cust, filterYear, filterMonth, yearsList]);
+
+  const trendData = useMemo(() => {
+     if (!cust) return [];
+     let targetYears = filterYear;
+     if (targetYears.length === 0) {
+        const maxYearStr = yearsList[1];
+        targetYears = maxYearStr ? [maxYearStr] : ['2026'];
+     }
+     const prevYears = targetYears.map(y => String(parseInt(y) - 1));
+     
+     const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+     const validMonths = filterMonth.length > 0 ? filterMonth : Object.keys(mToNum);
+     
+     const mMap = {};
+     validMonths.forEach(m => {
+        mMap[m] = { name: m, revenue: 0, volume: 0, prevRevenue: 0, prevVolume: 0 };
+     });
+     
+     cust.monthlyDataArr.forEach(m => {
+        if (!mMap[m.mText]) return;
+        if (targetYears.includes(m.yearText)) { mMap[m.mText].revenue += m.revenue; mMap[m.mText].volume += m.volume; }
+        else if (prevYears.includes(m.yearText)) { mMap[m.mText].prevRevenue += m.revenue; mMap[m.mText].prevVolume += m.volume; }
+     });
+     return Object.values(mMap).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
+  }, [cust, filterYear, filterMonth, yearsList]);
+
   const chartData = cust ? cust.monthlyDataArr : [];
   const lastMonth = chartData.length > 0 ? chartData[chartData.length - 1] : null;
-
-  // 2. Secondary Derived Data (Depends on core data)
-  const avgRev = cust && cust.totalVol ? cust.totalRev / cust.totalVol : 0;
   
   const revChangeLabel = lastMonth?.revChange ? `${lastMonth.revChange > 0 ? '+' : ''}${lastMonth.revChange.toFixed(1)}%` : '0%';
   const volChangeLabel = lastMonth?.volChange ? `${lastMonth.volChange > 0 ? '+' : ''}${lastMonth.volChange.toFixed(1)}%` : '0%';
@@ -456,11 +502,12 @@ const CustomerInfo = ({ data }) => {
            </div>
            
            <div className="flex flex-wrap lg:flex-nowrap gap-2 items-end">
+             <MultiSelectDropdown label="Year" options={yearsList} selectedValues={filterYear} onChange={setFilterYear} width="w-24" className="flex-shrink-0" />
+             <MultiSelectDropdown label="Select Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-32" className="flex-shrink-0" />
              <MultiSelectDropdown label="Province" options={provinces} selectedValues={filterProv} onChange={setFilterProv} width="w-28" className="flex-shrink-0" />
              <MultiSelectDropdown label="Branch" options={allBranches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-28" className="flex-shrink-0" />
              <MultiSelectDropdown label="Type" options={allCustTypes} selectedValues={filterCustType} onChange={setFilterCustType} width="w-28" className="flex-shrink-0" />
              <MultiSelectDropdown label="Contract" options={allContractEnds} selectedValues={filterContractEnd} onChange={setFilterContractEnd} width="w-28" className="flex-shrink-0" />
-             <MultiSelectDropdown label="Select Month" options={monthsList} selectedValues={filterMonth} onChange={setFilterMonth} width="w-32" className="flex-shrink-0" />
 
               <button onClick={resetFilters} className="text-[11px] bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-200 h-[32px] font-bold mt-auto leading-none">
                 Reset
@@ -543,9 +590,16 @@ const CustomerInfo = ({ data }) => {
                   <div className="bg-orange-50 p-4 rounded-2xl mr-5 group-hover:bg-orange-100 transition-colors">
                      <DollarSign size={24} className="text-orange-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Revenue</p>
-                     <p className="text-2xl font-black text-gray-800">{formatCurrency(cust.totalRev)}</p>
+                     <div className="flex items-end justify-between">
+                        <p className="text-2xl font-black text-gray-800">{formatCurrency(filteredMetrics?.rev || 0)}</p>
+                        {filteredMetrics && (
+                           <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${filteredMetrics.rev >= filteredMetrics.prevRev ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                              YoY {filteredMetrics.rev >= filteredMetrics.prevRev ? '+' : ''}{filteredMetrics.prevRev ? (((filteredMetrics.rev - filteredMetrics.prevRev)/filteredMetrics.prevRev)*100).toFixed(1) : 0}%
+                           </div>
+                        )}
+                     </div>
                   </div>
                </div>
 
@@ -553,9 +607,16 @@ const CustomerInfo = ({ data }) => {
                   <div className="bg-blue-50 p-4 rounded-2xl mr-5 group-hover:bg-blue-100 transition-colors">
                      <Package size={24} className="text-blue-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Total Volume</p>
-                     <p className="text-2xl font-black text-gray-800">{formatNumberFull(cust.totalVol)} pcs</p>
+                     <div className="flex items-end justify-between">
+                        <p className="text-2xl font-black text-gray-800">{formatNumberFull(filteredMetrics?.vol || 0)} pcs</p>
+                        {filteredMetrics && (
+                           <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${filteredMetrics.vol >= filteredMetrics.prevVol ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                              YoY {filteredMetrics.vol >= filteredMetrics.prevVol ? '+' : ''}{filteredMetrics.prevVol ? (((filteredMetrics.vol - filteredMetrics.prevVol)/filteredMetrics.prevVol)*100).toFixed(1) : 0}%
+                           </div>
+                        )}
+                     </div>
                   </div>
                </div>
 
@@ -563,9 +624,16 @@ const CustomerInfo = ({ data }) => {
                   <div className="bg-rose-50 p-4 rounded-2xl mr-5 group-hover:bg-rose-100 transition-colors">
                      <Activity size={24} className="text-rose-600" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Avg Revenue / Piece</p>
-                     <p className="text-2xl font-black text-gray-800">{formatCurrency(cust.totalVol > 0 ? cust.totalRev / cust.totalVol : 0)}</p>
+                     <div className="flex items-end justify-between">
+                        <p className="text-2xl font-black text-gray-800">{formatCurrency(filteredMetrics?.avg || 0)}</p>
+                        {filteredMetrics && (
+                           <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${filteredMetrics.avg >= filteredMetrics.prevAvg ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                              YoY {filteredMetrics.avg >= filteredMetrics.prevAvg ? '+' : ''}{filteredMetrics.prevAvg ? (((filteredMetrics.avg - filteredMetrics.prevAvg)/filteredMetrics.prevAvg)*100).toFixed(1) : 0}%
+                           </div>
+                        )}
+                     </div>
                   </div>
                </div>
             </div>
@@ -646,9 +714,9 @@ const CustomerInfo = ({ data }) => {
              
              <div className="h-72 w-full mt-4">
               <ResponsiveContainer>
-                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} dy={10} />
                   <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} tickFormatter={(val) => `${val/1000}k`} />
                   <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} />
                   
@@ -661,16 +729,43 @@ const CustomerInfo = ({ data }) => {
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         const data = payload[0].payload;
+                        let revPct = data.prevRevenue ? (((data.revenue - data.prevRevenue)/data.prevRevenue)*100).toFixed(1) : null;
+                        let volPct = data.prevVolume ? (((data.volume - data.prevVolume)/data.prevVolume)*100).toFixed(1) : null;
+                        
                         return (
-                          <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100">
-                            <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                            <div className="text-sm space-y-1">
-                              <p className="text-[#8884d8] font-medium">Revenue: {formatCurrency(data.revenue)} </p>
-                              <p className="text-[#82ca9d] font-medium">Volume: {formatNumberFull(data.volume)} pcs</p>
+                          <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-100 min-w-[220px]">
+                            <p className="font-bold text-gray-500 text-[11px] uppercase tracking-widest mb-3 border-b border-gray-50 pb-2">{label}</p>
+                            
+                            <div className="space-y-3">
+                              <div className="flex justify-between items-start">
+                                 <div>
+                                    <p className="text-[#8884d8] text-xs font-bold mb-0.5">Revenue (รายได้)</p>
+                                    <p className="text-gray-900 text-sm font-black">{formatCurrency(data.revenue)}</p>
+                                    <p className="text-gray-400 text-[10px] font-medium">vs {formatCurrency(data.prevRevenue)}</p>
+                                 </div>
+                                 {revPct !== null && (
+                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${revPct >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                                       {revPct >= 0 ? '▲' : '▼'} {Math.abs(revPct)}%
+                                    </span>
+                                 )}
+                              </div>
+
+                              <div className="flex justify-between items-start pt-2 border-t border-gray-50">
+                                 <div>
+                                    <p className="text-[#82ca9d] text-xs font-bold mb-0.5">Volume (จำนวน)</p>
+                                    <p className="text-gray-900 text-sm font-black">{formatNumberFull(data.volume)} pcs</p>
+                                    <p className="text-gray-400 text-[10px] font-medium">vs {formatNumberFull(data.prevVolume)} pcs</p>
+                                 </div>
+                                 {volPct !== null && (
+                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md ${volPct >= 0 ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
+                                       {volPct >= 0 ? '▲' : '▼'} {Math.abs(volPct)}%
+                                    </span>
+                                 )}
+                              </div>
+                              
                               {targetCriteria && (
-                                <p className={`font-semibold mt-2 pt-1 border-t border-gray-100 ${data.volume >= targetCriteria ? 'text-green-600' : 'text-red-500'}`}>
-                                  Target: {((data.volume / targetCriteria) * 100).toFixed(1)}% 
-                                  ({data.volume >= targetCriteria ? 'Met!' : 'Missed'})
+                                <p className={`font-semibold text-xs mt-2 pt-2 border-t border-gray-100 ${data.volume >= targetCriteria ? 'text-emerald-600' : 'text-rose-500'}`}>
+                                  Target: {((data.volume / targetCriteria) * 100).toFixed(1)}% ({data.volume >= targetCriteria ? 'Met!' : 'Missed'})
                                 </p>
                               )}
                             </div>
@@ -680,10 +775,16 @@ const CustomerInfo = ({ data }) => {
                       return null;
                     }}
                   />
-                  <Legend />
-                  <Bar yAxisId="right" dataKey="volume" name="Volume" fill="#E8EAF6" radius={[4, 4, 0, 0]} />
-                  <Line yAxisId="left" type="monotone" dataKey="revenue" name="Revenue" stroke="#8884d8" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
-                </BarChart>
+                  <Legend iconType="circle" />
+                  
+                  {/* Previous Year Overlay (Opacity Reduced) */}
+                  <Bar yAxisId="right" dataKey="prevVolume" name="Last Year Vol" fill="#E8EAF6" fillOpacity={0.5} radius={[4, 4, 0, 0]} barSize={30} />
+                  <Line yAxisId="left" type="monotone" dataKey="prevRevenue" name="Last Year Rev" stroke="#8884d8" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="4 4" dot={false} activeDot={false} />
+                  
+                  {/* Current Year Primary Data */}
+                  <Bar yAxisId="right" dataKey="volume" name="This Year Vol" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={30} />
+                  <Line yAxisId="left" type="monotone" dataKey="revenue" name="This Year Rev" stroke="#8884d8" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>

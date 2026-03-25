@@ -347,11 +347,17 @@ const CustomerInfo = ({ data }) => {
     const history = cust.monthlyDataArr;
     let current, previous;
 
-    if (filterMonth === 'All') {
+    if (filterMonth.length === 0) {
        current = history[history.length - 1];
        previous = history.length > 1 ? history[history.length - 2] : null;
     } else {
-       const idx = history.findIndex(d => d.month === filterMonth);
+       let idx = -1;
+       for (let i = history.length - 1; i >= 0; i--) {
+          if (filterMonth.includes(history[i].month)) {
+             idx = i;
+             break;
+          }
+       }
        if (idx === -1) {
           current = history[history.length - 1];
           previous = history.length > 1 ? history[history.length - 2] : null;

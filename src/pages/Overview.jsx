@@ -180,34 +180,38 @@ const Overview = ({ data }) => {
      let current = null;
      let previous = null;
      
-     if (filterMonth === 'All') {
-        const sorted = trendData;
-        if (sorted.length >= 1) current = sorted[sorted.length - 1];
-        if (sorted.length >= 2) previous = sorted[sorted.length - 2];
+     if (filterMonth.length === 0) {
+         const sorted = trendData;
+         if (sorted.length >= 1) current = sorted[sorted.length - 1];
+         if (sorted.length >= 2) previous = sorted[sorted.length - 2];
      } else {
-        const currentIdx = monthsList.indexOf(filterMonth);
-        current = trendData.find(d => d.name === filterMonth);
-        
-        if (currentIdx > 1) {
-           const prevMonthName = monthsList[currentIdx - 1];
-           const prevData = data.filter(r => {
-              const mn = r['เดือน'] || r.month;
-              if (mn !== prevMonthName) return false;
-              if (filterProv !== 'All' && r['จังหวัด'] !== filterProv) return false;
-              if (filterType !== 'All' && r['ประเภทบริการ'] !== filterType) return false;
-              const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
-              if (filterBranch !== 'All' && b !== filterBranch) return false;
-              return true;
-           });
-           
-           let pRev = 0; let pVol = 0; let pAccSet = new Set();
-           prevData.forEach(r => {
-              pRev += parseFloat(r['รายได้']) || 0;
-              pVol += parseInt(r['ชิ้นงาน']) || 0;
-              if (r['ชื่อบัญชี']) pAccSet.add(r['ชื่อบัญชี']);
-           });
-           previous = { revenue: pRev, volume: pVol, activeAccounts: pAccSet.size };
-        }
+         const sorted = trendData;
+         if (sorted.length >= 1) {
+            current = sorted[sorted.length - 1];
+            const targetM = current.name;
+            const currentIdx = monthsList.indexOf(targetM);
+            
+            if (currentIdx > 1) {
+               const prevMonthName = monthsList[currentIdx - 1];
+               const prevData = data.filter(r => {
+                  const mn = r['เดือน'] || r.month;
+                  if (mn !== prevMonthName) return false;
+                  if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+                  if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+                  const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+                  if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
+                  return true;
+               });
+               
+               let pRev = 0; let pVol = 0; let pAccSet = new Set();
+               prevData.forEach(r => {
+                  pRev += parseFloat(r['รายได้']) || parseFloat(String(r['รายได้']).replace(/,/g, '')) || 0;
+                  pVol += parseInt(r['ชิ้นงาน']) || parseInt(String(r['ชิ้นงาน']).replace(/,/g, '')) || 0;
+                  if (r['ชื่อบัญชี']) pAccSet.add(r['ชื่อบัญชี']);
+               });
+               previous = { revenue: pRev, volume: pVol, activeAccounts: pAccSet.size };
+            }
+         }
      }
 
      if (!current) return null;

@@ -23,7 +23,30 @@ const Overview = ({ data }) => {
   const [selectedTrendMetric, setSelectedTrendMetric] = useState('revenue');
   const [membershipMetric, setMembershipMetric] = useState('revenue');
   const [trendChartType, setTrendChartType] = useState('line');
+  const [topLimit, setTopLimit] = useState(10);
   const dashboardRef = useRef(null);
+
+  // Initialize defaults
+  React.useEffect(() => {
+    if (data && data.length > 0) {
+      // Find latest year
+      const years = Array.from(new Set(data.map(r => String(r['ปี'] || r.year || '2026')))).sort((a,b) => parseInt(b) - parseInt(a));
+      const latestYear = years[0];
+      if (latestYear) setFilterYear([latestYear]);
+
+      // Find latest month for that year
+      const monthsForYear = data.filter(r => String(r['ปี'] || r.year || '2026') === latestYear)
+                                .map(r => r['เดือน'] || r.month)
+                                .filter(Boolean);
+      
+      if (monthsForYear.length > 0) {
+        // Sort months to find the latest
+        const sortedMonths = Array.from(new Set(monthsForYear)).sort((a,b) => (mToNum[b] || 0) - (mToNum[a] || 0));
+        const latestMonth = sortedMonths[0];
+        if (latestMonth) setFilterMonth([latestMonth]);
+      }
+    }
+  }, [data]);
 
   const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val || 0);
   const formatNumber = (val) => new Intl.NumberFormat('th-TH').format(val || 0);
@@ -147,6 +170,7 @@ const Overview = ({ data }) => {
         const maxYearStr = yearsList[1];
         if (maxYearStr) targetYears = [maxYearStr];
      }
+     if (targetYears.length === 0) return null;
      
      const prevYears = targetYears.map(y => String(parseInt(y) - 1));
      
@@ -165,17 +189,17 @@ const Overview = ({ data }) => {
         return true;
      });
 
-     let totalRev = 0; let totalVol = 0; const activeAccounts = new Set();
+     let tRev = 0; let tVol = 0; const activeAccounts = new Set();
      pData.forEach(row => {
-        totalRev += row['รายได้'] || 0;
-        totalVol += row['ชิ้นงาน'] || 0;
+        tRev += row['รายได้'] || 0;
+        tVol += row['ชิ้นงาน'] || 0;
         if (row['ชื่อบัญชี']) activeAccounts.add(row['ชื่อบัญชี']);
      });
      
      if (pData.length === 0) return null; 
      
      return {
-        totalRev, totalVol, activeAccounts: activeAccounts.size, avgRev: totalVol ? totalRev / totalVol : 0
+        totalRev: tRev, totalVol: tVol, activeAccounts: activeAccounts.size, avgRev: tVol ? tRev / tVol : 0
      };
   }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, yearsList]);
 
@@ -221,17 +245,17 @@ const Overview = ({ data }) => {
         return true;
      });
 
-     let totalRev = 0; let totalVol = 0; const activeAccounts = new Set();
+     let tRev = 0; let tVol = 0; const activeAccounts = new Set();
      pData.forEach(row => {
-        totalRev += row['รายได้'] || 0;
-        totalVol += row['ชิ้นงาน'] || 0;
+        tRev += row['รายได้'] || 0;
+        tVol += row['ชิ้นงาน'] || 0;
         if (row['ชื่อบัญชี']) activeAccounts.add(row['ชื่อบัญชี']);
      });
      
      if (pData.length === 0) return null; 
 
      return {
-        totalRev, totalVol, activeAccounts: activeAccounts.size, avgRev: totalVol ? totalRev / totalVol : 0
+        totalRev: tRev, totalVol: tVol, activeAccounts: activeAccounts.size, avgRev: tVol ? tRev / tVol : 0
      };
   }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, filteredData]);
 
@@ -243,12 +267,16 @@ const Overview = ({ data }) => {
      }
      const prevYears = primaryYears.map(y => String(parseInt(y) - 1));
 
-     const validMonths = filterMonth.length > 0 ? filterMonth : Object.keys(mToNum);
+     // Always show all 12 months regardless of filterMonth
+     const validMonths = Object.keys(mToNum);
      
      const mMap = {};
      validMonths.forEach(m => {
         mMap[m] = { name: m, revenue: 0, volume: 0, prevRevenue: 0, prevVolume: 0, activeSet: new Set(), prevActiveSet: new Set() };
      });
+
+     let currYearTotalRev = 0;
+     let currYearTotalVol = 0;
 
      data.forEach(r => {
         const m = r['เดือน'] || r.month;
@@ -268,6 +296,8 @@ const Overview = ({ data }) => {
         if (primaryYears.includes(y)) {
            mMap[m].revenue += rev;
            mMap[m].volume += vol;
+           currYearTotalRev += rev;
+           currYearTotalVol += vol;
            if (r['ชื่อบัญชี']) mMap[m].activeSet.add(r['ชื่อบัญชี']);
         } else if (prevYears.includes(y)) {
            mMap[m].prevRevenue += rev;
@@ -276,18 +306,22 @@ const Overview = ({ data }) => {
         }
      });
 
-     return Object.values(mMap).map(m => ({ 
-         ...m, 
-         activeAccounts: m.activeSet.size, 
-         prevActiveAccounts: m.prevActiveSet.size 
-     })).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
-  }, [data, filterYear, filterMonth, filterProv, filterType, filterBranch, filterMembership, filterCustType, yearsList]);
+     return {
+       chartData: Object.values(mMap).map(m => ({ 
+           ...m, 
+           activeAccounts: m.activeSet.size, 
+           prevActiveAccounts: m.prevActiveSet.size 
+       })).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0)),
+       summary: { totalRev: currYearTotalRev, totalVol: currYearTotalVol, year: primaryYears.join(', ') }
+     };
+  }, [data, filterYear, filterProv, filterType, filterBranch, filterMembership, filterCustType, yearsList]);
 
   const aiInsights = useMemo(() => {
      let current = null;
      let previous = null;
      
-     const populatedData = trendData.filter(d => d.revenue > 0 || d.volume > 0);
+     const chartData = trendData.chartData;
+     const populatedData = chartData.filter(d => d.revenue > 0 || d.volume > 0);
      if (populatedData.length === 0) return null;
 
      current = populatedData[populatedData.length - 1];
@@ -298,27 +332,7 @@ const Overview = ({ data }) => {
         let pYear = parseInt(filterYear.length === 1 ? filterYear[0] : (yearsList[1] || '2026'));
         let pMonthNum = currentMonthNum - 1;
         const prevMonthName = Object.keys(mToNum).find(k => mToNum[k] === pMonthNum);
-
-        const prevData = data.filter(r => {
-           const y = parseInt(r['ปี'] || r.year || 2026);
-           const mn = r['เดือน'] || r.month;
-           if (y !== pYear || mn !== prevMonthName) return false;
-           if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
-           if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
-           const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
-           if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
-           if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
-           if (filterCustType.length > 0 && !filterCustType.includes(r.customerType)) return false;
-           return true;
-        });
-        
-        let pRev = 0; let pVol = 0; let pAccSet = new Set();
-        prevData.forEach(r => {
-           pRev += parseFloat(r['รายได้']) || parseFloat(String(r['รายได้']).replace(/,/g, '')) || 0;
-           pVol += parseInt(r['ชิ้นงาน']) || parseInt(String(r['ชิ้นงาน']).replace(/,/g, '')) || 0;
-           if (r['ชื่อบัญชี']) pAccSet.add(r['ชื่อบัญชี']);
-        });
-        previous = { revenue: pRev, volume: pVol, activeAccounts: pAccSet.size };
+        previous = chartData.find(d => d.name === prevMonthName);
      }
 
      if (!current) return null;
@@ -452,8 +466,8 @@ const Overview = ({ data }) => {
       accMap[acc].revenue += row['รายได้'] || 0;
       accMap[acc].volume += row['ชิ้นงาน'] || 0;
     });
-    return Object.values(accMap).sort((a,b) => b.revenue - a.revenue).slice(0, 100);
-  }, [filteredData]);
+    return Object.values(accMap).sort((a,b) => b.revenue - a.revenue).slice(0, topLimit);
+  }, [filteredData, topLimit]);
 
   return (
     <div className="space-y-6" ref={dashboardRef}>
@@ -491,10 +505,6 @@ const Overview = ({ data }) => {
           <span>Export Image</span>
         </button>
       </div>
-
-      {/* Standalone AI Box removed from top */}
-
-
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
@@ -582,7 +592,7 @@ const Overview = ({ data }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 relative overflow-hidden group">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 relative overflow-hidden group border-purple-100">
            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
            <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><TrendingUp size={20} /></div>
@@ -658,9 +668,21 @@ const Overview = ({ data }) => {
             </div>
          </div>
          
-         <div className="h-80 w-full">
+          <div className="h-80 w-full relative">
+            {/* Trend Summary Box */}
+            <div className="absolute top-0 right-0 z-10 flex gap-4 pointer-events-none">
+              <div className="bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 p-2 px-3 rounded-xl shadow-sm text-right">
+                <p className="text-[10px] font-bold text-indigo-400 uppercase leading-none mb-1">Total Rev ({trendData.summary.year})</p>
+                <p className="text-sm font-black text-indigo-700 leading-none">{formatCurrency(trendData.summary.totalRev)}</p>
+              </div>
+              <div className="bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 p-2 px-3 rounded-xl shadow-sm text-right">
+                <p className="text-[10px] font-bold text-emerald-400 uppercase leading-none mb-1">Total Vol ({trendData.summary.year})</p>
+                <p className="text-sm font-black text-emerald-700 leading-none">{formatNumber(trendData.summary.totalVol)} <span className="text-[10px]">pcs</span></p>
+              </div>
+            </div>
+
             <ResponsiveContainer>
-               <ComposedChart data={trendData} margin={{ top: 25, right: 20, left: 10, bottom: 5 }}>
+               <ComposedChart data={trendData.chartData} margin={{ top: 25, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12, fontWeight: 500}} dy={15} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#9ca3af', fontSize: 12}} 
@@ -676,8 +698,8 @@ const Overview = ({ data }) => {
                             let formattedVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(val) : formatNumber(val);
                             let formattedPrevVal = selectedTrendMetric === 'revenue' || selectedTrendMetric === 'avgRev' ? formatCurrency(prevVal) : formatNumber(prevVal);
                             
-                            const idx = trendData.findIndex(x => x.name === label);
-                            const prevM = idx > 0 ? trendData[idx - 1] : null;
+                            const idx = trendData.chartData.findIndex(x => x.name === label);
+                            const prevM = idx > 0 ? trendData.chartData[idx - 1] : null;
                             let prevMoMVal = prevM ? (selectedTrendMetric === 'revenue' ? prevM.revenue : selectedTrendMetric === 'volume' ? prevM.volume : selectedTrendMetric === 'accounts' ? prevM.activeAccounts : (prevM.volume ? prevM.revenue/prevM.volume : 0)) : null;
                             let momPct = prevMoMVal ? (((val - prevMoMVal)/prevMoMVal)*100).toFixed(1) : null;
 
@@ -713,7 +735,7 @@ const Overview = ({ data }) => {
                                         </div>
                                      )}
                                   </div>
-                               </div>
+                                </div>
                             );
                          }
                          return null;
@@ -744,24 +766,34 @@ const Overview = ({ data }) => {
                      </> : 
                      <>
                         <Bar dataKey="prevVolume" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
-                        <Bar dataKey="volume" name="This Year" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="volume" name="This Year" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={20}>
+                           <LabelList dataKey="volume" position="top" offset={10} formatter={(val) => formatNumberCompact(val)} style={{fill: '#3b82f6', fontSize: 10, fontWeight: 'bold'}} />
+                        </Bar>
                      </>
                   )}
                   
                   {selectedTrendMetric === 'accounts' && (trendChartType === 'line' ? 
                      <>
                         <Line type="monotone" dataKey="prevActiveAccounts" name="Last Year" stroke="#94a3b8" strokeOpacity={0.7} strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
-                        <Line type="monotone" dataKey="activeAccounts" name="This Year" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} />
+                        <Line type="monotone" dataKey="activeAccounts" name="This Year" stroke="#10b981" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}}>
+                           <LabelList dataKey="activeAccounts" position="top" offset={10} style={{fill: '#10b981', fontSize: 10, fontWeight: 'bold'}} />
+                        </Line>
                      </> : 
                      <>
                         <Bar dataKey="prevActiveAccounts" name="Last Year" fill="#94a3b8" fillOpacity={0.5} radius={[6, 6, 0, 0]} barSize={20} />
-                        <Bar dataKey="activeAccounts" name="This Year" fill="#10b981" radius={[6, 6, 0, 0]} barSize={20} />
+                        <Bar dataKey="activeAccounts" name="This Year" fill="#10b981" radius={[6, 6, 0, 0]} barSize={20}>
+                            <LabelList dataKey="activeAccounts" position="top" offset={10} style={{fill: '#10b981', fontSize: 10, fontWeight: 'bold'}} />
+                        </Bar>
                      </>
                   )}
                   
                   {selectedTrendMetric === 'avgRev' && (trendChartType === 'line' ? 
-                     <Line type="monotone" dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" stroke="#8b5cf6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}} /> : 
-                     <Bar dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40} />
+                     <Line type="monotone" dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" stroke="#8b5cf6" strokeWidth={4} dot={{r: 4}} activeDot={{r: 7}}>
+                        <LabelList dataKey={(d) => d.volume ? d.revenue/d.volume : 0} position="top" offset={10} formatter={(val) => val.toFixed(1)} style={{fill: '#8b5cf6', fontSize: 10, fontWeight: 'bold'}} />
+                     </Line> : 
+                     <Bar dataKey={(d) => d.volume ? d.revenue/d.volume : 0} name="Avg Rev" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={40}>
+                         <LabelList dataKey={(d) => d.volume ? d.revenue/d.volume : 0} position="top" offset={10} formatter={(val) => val.toFixed(1)} style={{fill: '#8b5cf6', fontSize: 10, fontWeight: 'bold'}} />
+                     </Bar>
                   )}
                </ComposedChart>
             </ResponsiveContainer>
@@ -828,7 +860,22 @@ const Overview = ({ data }) => {
 
       {/* Top Performers Table */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-         <h3 className="text-lg font-semibold text-gray-800 mb-6">Top Customers</h3>
+         <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
+            <div className="flex items-center gap-2">
+               <span className="text-xs text-gray-400 font-bold uppercase">Show:</span>
+               <select 
+                  value={topLimit} 
+                  onChange={(e) => setTopLimit(parseInt(e.target.value))}
+                  className="bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-1.5 font-bold outline-none"
+               >
+                  <option value={10}>10 รายชื่อ</option>
+                  <option value={20}>20 รายชื่อ</option>
+                  <option value={50}>50 รายชื่อ</option>
+                  <option value={100}>100 รายชื่อ</option>
+               </select>
+            </div>
+         </div>
          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>

@@ -49,7 +49,7 @@ const Login = () => {
         <div className="p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
+            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-black/30">
               <span className="text-white font-black text-3xl leading-none">P</span>
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">PostDash</h1>

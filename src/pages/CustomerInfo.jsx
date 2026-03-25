@@ -776,15 +776,25 @@ const CustomerInfo = ({ data }) => {
                       return null;
                     }}
                   />
-                  <Legend iconType="circle" />
+                  <Legend 
+                    iconType="circle"
+                    content={() => (
+                      <div className="flex flex-wrap justify-center gap-4 text-[11px] font-semibold pt-2">
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#6366f1]"></span>Revenue ปีนี้</span>
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#94a3b8] opacity-70"></span>Revenue ปีก่อน</span>
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#34d399]"></span>Volume ปีนี้</span>
+                        <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#cbd5e1]"></span>Volume ปีก่อน</span>
+                      </div>
+                    )}
+                  />
                   
-                  {/* Previous Year Overlay (Opacity Reduced) */}
-                  <Bar yAxisId="right" dataKey="prevVolume" name="Last Year Vol" fill="#E8EAF6" fillOpacity={0.5} radius={[4, 4, 0, 0]} barSize={30} />
-                  <Line yAxisId="left" type="monotone" dataKey="prevRevenue" name="Last Year Rev" stroke="#8884d8" strokeOpacity={0.3} strokeWidth={3} strokeDasharray="4 4" dot={false} activeDot={false} />
+                  {/* Previous Year Overlay - Gray to distinguish */}
+                  <Bar yAxisId="right" dataKey="prevVolume" name="Volume ปีก่อน" fill="#cbd5e1" fillOpacity={0.8} radius={[4, 4, 0, 0]} barSize={26} />
+                  <Line yAxisId="left" type="monotone" dataKey="prevRevenue" name="Revenue ปีก่อน" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
                   
-                  {/* Current Year Primary Data */}
-                  <Bar yAxisId="right" dataKey="volume" name="This Year Vol" fill="#82ca9d" radius={[4, 4, 0, 0]} barSize={30} />
-                  <Line yAxisId="left" type="monotone" dataKey="revenue" name="This Year Rev" stroke="#8884d8" strokeWidth={4} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} />
+                  {/* Current Year - Vivid colors */}
+                  <Bar yAxisId="right" dataKey="volume" name="Volume ปีนี้" fill="#34d399" radius={[4, 4, 0, 0]} barSize={26} />
+                  <Line yAxisId="left" type="monotone" dataKey="revenue" name="Revenue ปีนี้" stroke="#6366f1" strokeWidth={3} dot={{r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6}} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>

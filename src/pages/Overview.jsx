@@ -575,11 +575,18 @@ const Overview = ({ data }) => {
           </div>
           <div className="flex items-end justify-between">
              <p className="text-3xl font-bold text-gray-800">{formatNumber(summary.activeAccounts)}</p>
-             {prevSummary && (
-                 <div className={`text-xs font-bold px-2 py-1 rounded-md mb-1 ${summary.activeAccounts >= prevSummary.activeAccounts ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {summary.activeAccounts >= prevSummary.activeAccounts ? '+' : ''}{prevSummary.activeAccounts ? (((summary.activeAccounts - prevSummary.activeAccounts)/prevSummary.activeAccounts)*100).toFixed(1) : 0}%
+             <div className="flex flex-col items-end gap-1">
+               {moMSummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.activeAccounts >= moMSummary.activeAccounts ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    MoM {summary.activeAccounts >= moMSummary.activeAccounts ? '+' : ''}{moMSummary.activeAccounts ? (((summary.activeAccounts - moMSummary.activeAccounts)/moMSummary.activeAccounts)*100).toFixed(1) : 0}%
                  </div>
-              )}
+               )}
+               {yoySummary && (
+                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${summary.activeAccounts >= yoySummary.activeAccounts ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700'}`}>
+                    YoY {summary.activeAccounts >= yoySummary.activeAccounts ? '+' : ''}{yoySummary.activeAccounts ? (((summary.activeAccounts - yoySummary.activeAccounts)/yoySummary.activeAccounts)*100).toFixed(1) : 0}%
+                 </div>
+               )}
+             </div>
           </div>
         </div>
 

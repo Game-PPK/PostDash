@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { AlertTriangle, MapPin, Building, Search, ArrowRight, RefreshCw, FileSpreadsheet, Image as ImageIcon } from 'lucide-react';
+import { AlertTriangle, MapPin, Building, Search, ArrowRight, RefreshCw, FileSpreadsheet, Image as ImageIcon, Settings } from 'lucide-react';
 import Select from 'react-select';
 import * as htmlToImage from 'html-to-image';
 import * as XLSX from 'xlsx';
@@ -52,6 +52,10 @@ const AtRiskCustomers = ({ data }) => {
   useEffect(() => {
      if (latestMonth && filterMonth.length === 0) setFilterMonth([latestMonth]);
   }, [latestMonth]);
+
+  const [showSettings, setShowSettings] = useState(false);
+  const [customDropPercent, setCustomDropPercent] = useState(25);
+  const [customConsecutiveMonths, setCustomConsecutiveMonths] = useState(3);
 
   // Options for react-select removed
 
@@ -144,29 +148,34 @@ const AtRiskCustomers = ({ data }) => {
         let riskReason = [];
         const arr = cust.monthlyDataArr;
         
-        // condition 1: last month rev drop > 25%
+        // condition 1: last month rev drop > customDropPercent
         if (arr.length >= 2) {
            const current = arr[arr.length - 1].revenue;
            const prev = arr[arr.length - 2].revenue;
            if (prev > 0) {
               const drop = ((current - prev) / prev) * 100;
-              if (drop <= -25) {
+              if (drop <= -customDropPercent) {
                  isRisk = true;
-                 const type = drop <= -50 ? 'critical' : 'high';
+                 const type = drop <= -(customDropPercent * 2) ? 'critical' : 'high';
                  riskReason.push({ text: `รายได้ลดลง ${Math.abs(drop).toFixed(1)}% ในเดือนล่าสุด`, type });
               }
            }
         }
         
-        // condition 2: 3 consecutive drops
-        if (arr.length >= 4) {
-           const m1 = arr[arr.length - 1].revenue;
-           const m2 = arr[arr.length - 2].revenue;
-           const m3 = arr[arr.length - 3].revenue;
-           const m4 = arr[arr.length - 4].revenue;
-           if (m1 < m2 && m2 < m3 && m3 < m4) {
+        // condition 2: custom consecutive drops
+        if (arr.length >= customConsecutiveMonths + 1) {
+           let isConsecutiveDrop = true;
+           for (let i = 1; i <= customConsecutiveMonths; i++) {
+              const curr = arr[arr.length - i].revenue;
+              const prev = arr[arr.length - i - 1].revenue;
+              if (curr >= prev) {
+                 isConsecutiveDrop = false;
+                 break;
+              }
+           }
+           if (isConsecutiveDrop) {
               isRisk = true;
-              riskReason.push({ text: 'รายได้ลดลงติดต่อกัน 3 เดือนแล้ว', type: 'consecutive' });
+              riskReason.push({ text: `รายได้ลดลงติดต่อกัน ${customConsecutiveMonths} เดือนแล้ว`, type: 'consecutive' });
            }
         }
 
@@ -179,7 +188,7 @@ const AtRiskCustomers = ({ data }) => {
     });
 
     return risks.sort((a,b) => b.totalRev - a.totalRev);
-  }, [data, filterMonth]);
+  }, [data, filterMonth, customDropPercent, customConsecutiveMonths]);
 
   const filteredLists = useMemo(() => {
      return atRiskCustomers.filter(c => {
@@ -230,7 +239,7 @@ const AtRiskCustomers = ({ data }) => {
                <AlertTriangle className="mr-3" size={28} />
                At-Risk Customers (ลูกค้ากลุ่มเสี่ยง)
             </h2>
-            <p className="text-red-600 mt-2">รายชื่อลูกค้าที่มีสัญญาณรายได้ลดลงเกิน 25% ล่าสุด หรือลดลงติดต่อกัน 3 เดือน แนะนำให้เข้าพบด่วน</p>
+            <p className="text-red-600 mt-2">รายชื่อลูกค้าที่มีสัญญาณรายได้ลดลงเกิน {customDropPercent}% ล่าสุด หรือลดลงติดต่อกัน {customConsecutiveMonths} เดือน แนะนำให้เข้าพบด่วน</p>
          </div>
          <div className="text-center bg-white p-4 rounded-2xl shadow-sm min-w-[140px] shrink-0">
             <p className="text-3xl font-extrabold text-red-600">{filteredLists.length}</p>
@@ -258,9 +267,14 @@ const AtRiskCustomers = ({ data }) => {
         <MultiSelectDropdown label="Provinces" options={allProvinces} selectedValues={selectedProvs} onChange={handleProvChange} width="w-48" />
         <MultiSelectDropdown label="Branches" options={allBranches.filter(b => selectedProvs.length === 0 || selectedProvs.includes(branchProvMap[b]))} selectedValues={selectedBranches} onChange={setSelectedBranches} width="w-48" />
 
-        <button onClick={handleResetFilters} className="flex items-center justify-center text-sm bg-gray-100 border border-gray-200 shadow-sm px-4 py-2 rounded-xl text-gray-700 hover:bg-gray-200 transition-colors h-[42px]">
-           <RefreshCw size={16} className="mr-2" /> Reset
-        </button>
+        <div className="flex gap-2">
+           <button onClick={() => setShowSettings(!showSettings)} className={`flex items-center justify-center text-sm border shadow-sm px-4 py-2 rounded-xl transition-colors h-[42px] font-medium ${showSettings ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`}>
+              <Settings size={16} className="mr-2" /> Criteria
+           </button>
+           <button onClick={handleResetFilters} className="flex items-center justify-center text-sm bg-gray-100 border border-gray-200 shadow-sm px-4 py-2 rounded-xl text-gray-700 hover:bg-gray-200 transition-colors h-[42px]">
+              <RefreshCw size={16} className="mr-2" /> Reset
+           </button>
+        </div>
 
         <div className="flex gap-2">
             <button onClick={handleExportImage} className="flex items-center justify-center text-sm bg-white border border-gray-200 shadow-sm px-4 py-2 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors h-[42px] font-medium">
@@ -271,6 +285,28 @@ const AtRiskCustomers = ({ data }) => {
             </button>
         </div>
       </div>
+
+      {/* Settings Panel */}
+      {showSettings && (
+         <div className="bg-indigo-50/50 border border-indigo-100 p-5 rounded-2xl shadow-sm z-10 relative flex flex-wrap gap-6 items-center animate-fade-in">
+            <div className="flex items-center gap-3">
+               <label className="text-sm font-semibold text-indigo-900">Target Drop %:</label>
+               <div className="flex items-center text-sm shadow-sm rounded-lg overflow-hidden">
+                  <span className="bg-white border border-gray-200 border-r-0 px-3 py-2 text-gray-500 font-bold">%</span>
+                  <input type="number" min="1" max="100" value={customDropPercent} onChange={e => setCustomDropPercent(Number(e.target.value) || 1)} className="w-20 px-3 py-2 border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-center font-bold text-indigo-700" />
+               </div>
+            </div>
+            <div className="flex items-center gap-3">
+               <label className="text-sm font-semibold text-indigo-900">Consecutive Declines:</label>
+               <div className="flex items-center text-sm shadow-sm rounded-lg overflow-hidden">
+                  <input type="number" min="2" max="12" value={customConsecutiveMonths} onChange={e => setCustomConsecutiveMonths(Number(e.target.value) || 2)} className="w-16 px-3 py-2 border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-center font-bold text-indigo-700" />
+                  <span className="bg-white border border-gray-200 border-l-0 px-3 py-2 text-gray-500 font-bold">Months</span>
+               </div>
+            </div>
+            <div className="flex-1"></div>
+            <button onClick={() => { setCustomDropPercent(25); setCustomConsecutiveMonths(3); }} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">Reset Defaults</button>
+         </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden z-10 relative">

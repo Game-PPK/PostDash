@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Bell, CheckSquare, Square, Calendar, LogOut } from 'lucide-react';
+import { Bell, CheckSquare, Square, Calendar, LogOut, BarChart2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
@@ -127,6 +127,17 @@ const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
 
       {/* Right Icons */}
       <div className="flex items-center space-x-2">
+         {/* External Revenue Dashboard Link */}
+         <a 
+            href="https://reg6-revenue-dashboard-v2.vercel.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            title="Go to Revenue Dashboard"
+            className="p-2 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors mr-1"
+         >
+            <BarChart2 size={20} />
+         </a>
+         
         <div className="relative" ref={notifRef}>
           <button 
              onClick={() => setShowNotifications(!showNotifications)}

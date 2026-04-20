@@ -1,14 +1,45 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart, ReferenceLine
+  PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart, ReferenceLine, Treemap
 } from 'recharts';
 import { TrendingUp, Users, Package, DollarSign, Activity, Filter, RefreshCw, Download, PieChart as PieIcon } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 
 // Common colors for charts
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F'];
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F', '#ffbb28', '#FF8042', '#00C49F'];
+
+const CustomTreemapContent = (props) => {
+  const { root, depth, x, y, width, height, index, name, value } = props;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        style={{
+          fill: COLORS[index % COLORS.length] || '#8884d8',
+          stroke: '#fff',
+          strokeWidth: 2,
+        }}
+      />
+      {width > 65 && height > 30 && (
+        <text
+          x={x + width / 2}
+          y={y + height / 2 + 4}
+          textAnchor="middle"
+          fill="#fff"
+          fontSize={10}
+          fontWeight="500"
+        >
+          {name?.length > 20 ? name.substring(0, 20) + '...' : name}
+        </text>
+      )}
+    </g>
+  );
+};
 
 const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 
@@ -429,19 +460,8 @@ const Overview = ({ data }) => {
       if (!typeMap[t]) typeMap[t] = { name: t, value: 0 };
       typeMap[t].value += row['รายได้'] || 0;
     });
-    
     // Sort descending
-    const sorted = Object.values(typeMap).sort((a,b) => b.value - a.value);
-    
-    // Group long tail into "อื่นๆ (Others)" if there are more than 6 slices
-    if (sorted.length > 6) {
-       const top = sorted.slice(0, 5);
-       const othersValue = sorted.slice(5).reduce((sum, item) => sum + item.value, 0);
-       if (othersValue > 0) top.push({ name: 'อื่นๆ (Others)', value: othersValue });
-       return top;
-    }
-    
-    return sorted;
+    return Object.values(typeMap).sort((a,b) => b.value - a.value);
   }, [filteredData]);
 
   const membershipData = useMemo(() => {
@@ -840,15 +860,16 @@ const Overview = ({ data }) => {
           <h3 className="text-lg font-semibold text-gray-800 mb-6">Rev Share: Service Types</h3>
           <div className="h-80 w-full">
             <ResponsiveContainer>
-              <BarChart data={serviceTypeData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} />
-                <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#6b7280' }} interval={0} />
-                <Tooltip cursor={{fill: 'transparent'}} formatter={(val) => formatCurrency(val)} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
-                   {serviceTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                </Bar>
-              </BarChart>
+              <Treemap
+                data={serviceTypeData}
+                dataKey="value"
+                aspectRatio={4 / 3}
+                stroke="#fff"
+                fill="#8884d8"
+                content={<CustomTreemapContent />}
+              >
+                <Tooltip formatter={(val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val)} />
+              </Treemap>
             </ResponsiveContainer>
           </div>
         </div>

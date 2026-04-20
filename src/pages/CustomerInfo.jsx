@@ -1,13 +1,44 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, PieChart, Pie, Cell, Legend, ComposedChart
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, PieChart, Pie, Cell, Legend, ComposedChart, Treemap
 } from 'recharts';
 import { MapPin, Calendar, ArrowUpRight, TrendingDown, Package, TrendingUp, Download, Camera, RefreshCw, AlertTriangle, Info, Activity, DollarSign } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 import Select from 'react-select';
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F'];
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F', '#ffbb28', '#FF8042', '#00C49F'];
+
+const CustomTreemapContent = (props) => {
+  const { root, depth, x, y, width, height, index, name, value } = props;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        style={{
+          fill: COLORS[index % COLORS.length] || '#8884d8',
+          stroke: '#fff',
+          strokeWidth: 2,
+        }}
+      />
+      {width > 65 && height > 30 && (
+        <text
+          x={x + width / 2}
+          y={y + height / 2 + 4}
+          textAnchor="middle"
+          fill="#fff"
+          fontSize={10}
+          fontWeight="500"
+        >
+          {name?.length > 20 ? name.substring(0, 20) + '...' : name}
+        </text>
+      )}
+    </g>
+  );
+};
 
 const CustomerInfo = ({ data }) => {
   const pageRef = useRef(null);
@@ -374,15 +405,7 @@ const CustomerInfo = ({ data }) => {
   // Derived Donut Chart Data
   const servicePieData = useMemo(() => {
      if (!cust) return [];
-     const sorted = Object.entries(cust.services).map(([name, value]) => ({name, value})).sort((a,b)=>b.value-a.value);
-     
-     if (sorted.length > 6) {
-        const top = sorted.slice(0, 5);
-        const othersValue = sorted.slice(5).reduce((sum, item) => sum + item.value, 0);
-        if (othersValue > 0) top.push({ name: 'อื่นๆ (Others)', value: othersValue });
-        return top;
-     }
-     return sorted;
+     return Object.entries(cust.services).map(([name, value]) => ({name, value})).sort((a,b)=>b.value-a.value);
   }, [cust]);
 
   // Quarterly and Yearly Data
@@ -1042,15 +1065,16 @@ const CustomerInfo = ({ data }) => {
               <h3 className="text-base font-bold text-gray-800 mb-4 uppercase tracking-wider">Revenue by Service</h3>
               <div className="h-56 w-full">
                 <ResponsiveContainer>
-                  <BarChart data={servicePieData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} />
-                    <XAxis type="number" hide />
-                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
-                    <Tooltip cursor={{fill: 'transparent'}} formatter={(val) => formatCurrency(val)} />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
-                      {servicePieData.map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Bar>
-                  </BarChart>
+                  <Treemap
+                    data={servicePieData}
+                    dataKey="value"
+                    aspectRatio={4 / 3}
+                    stroke="#fff"
+                    fill="#8884d8"
+                    content={<CustomTreemapContent />}
+                  >
+                    <Tooltip formatter={(val) => formatCurrency(val)} />
+                  </Treemap>
                 </ResponsiveContainer>
               </div>
             </div>

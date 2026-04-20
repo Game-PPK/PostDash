@@ -56,6 +56,7 @@ const AtRiskCustomers = ({ data }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [customDropPercent, setCustomDropPercent] = useState(25);
   const [customConsecutiveMonths, setCustomConsecutiveMonths] = useState(3);
+  const [visibleCount, setVisibleCount] = useState(50);
 
   // Options for react-select removed
 
@@ -201,6 +202,8 @@ const AtRiskCustomers = ({ data }) => {
      });
   }, [atRiskCustomers, selectedProvs, selectedBranches, searchTerm]);
 
+  const displayLists = filteredLists.slice(0, visibleCount);
+
   const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val);
 
   // Export functions
@@ -323,7 +326,7 @@ const AtRiskCustomers = ({ data }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredLists.length > 0 ? filteredLists.map((c, i) => (
+                {displayLists.length > 0 ? displayLists.map((c, i) => (
                   <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-4 px-6 align-top">
                        <p className="font-bold text-gray-800 leading-tight">{c.name}</p>
@@ -361,6 +364,18 @@ const AtRiskCustomers = ({ data }) => {
                 )}
               </tbody>
             </table>
+            
+            {filteredLists.length > visibleCount && (
+               <div className="py-4 px-6 border-t border-gray-100 bg-gray-50 text-center">
+                  <button 
+                    onClick={() => setVisibleCount(v => v + 50)}
+                    className="px-6 py-2 bg-white border border-gray-200 shadow-sm rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                     Load More (+50)
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2">Showing {visibleCount} of {filteredLists.length} customers</p>
+               </div>
+            )}
          </div>
       </div>
     </div>

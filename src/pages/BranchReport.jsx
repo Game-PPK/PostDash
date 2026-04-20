@@ -56,6 +56,7 @@ const AtRiskCustomers = ({ data }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [customDropPercent, setCustomDropPercent] = useState(25);
   const [customConsecutiveMonths, setCustomConsecutiveMonths] = useState(3);
+  const [customMinRev, setCustomMinRev] = useState(100000);
   const [visibleCount, setVisibleCount] = useState(50);
 
   // Options for react-select removed
@@ -182,7 +183,7 @@ const AtRiskCustomers = ({ data }) => {
            }
         }
 
-        if (isRisk) {
+        if (isRisk && cust.totalRev >= customMinRev) {
            cust.riskReasonsStr = riskReason.map(r => r.text).join(', ');
            cust.riskReasons = riskReason;
            cust.lastRev = arr[arr.length - 1]?.revenue || 0;
@@ -191,7 +192,7 @@ const AtRiskCustomers = ({ data }) => {
     });
 
     return risks.sort((a,b) => b.totalRev - a.totalRev);
-  }, [data, filterMonth, customDropPercent, customConsecutiveMonths]);
+  }, [data, filterMonth, customDropPercent, customConsecutiveMonths, customMinRev]);
 
   const filteredLists = useMemo(() => {
      return atRiskCustomers.filter(c => {
@@ -308,8 +309,15 @@ const AtRiskCustomers = ({ data }) => {
                   <span className="bg-white border border-gray-200 border-l-0 px-3 py-2 text-gray-500 font-bold">Months</span>
                </div>
             </div>
+            <div className="flex items-center gap-3">
+               <label className="text-sm font-semibold text-indigo-900">Total Rev. Floor:</label>
+               <div className="flex items-center text-sm shadow-sm rounded-lg overflow-hidden">
+                  <span className="bg-white border border-gray-200 border-r-0 px-3 py-2 text-gray-500 font-bold">฿</span>
+                  <input type="number" min="0" step="10000" value={customMinRev} onChange={e => setCustomMinRev(Number(e.target.value) || 0)} className="w-24 px-3 py-2 border border-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-left font-bold text-indigo-700" />
+               </div>
+            </div>
             <div className="flex-1"></div>
-            <button onClick={() => { setCustomDropPercent(25); setCustomConsecutiveMonths(3); }} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">Reset Defaults</button>
+            <button onClick={() => { setCustomDropPercent(25); setCustomConsecutiveMonths(3); setCustomMinRev(100000); }} className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline">Reset Defaults</button>
          </div>
       )}
 

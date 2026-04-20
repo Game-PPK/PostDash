@@ -660,7 +660,7 @@ const CustomerInfo = ({ data }) => {
         {cust && (
           <div className="space-y-6">
             {/* Quick Totals KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-orange-200 transition-colors">
                   <div className="bg-orange-50 p-4 rounded-2xl mr-5 group-hover:bg-orange-100 transition-colors">
                      <DollarSign size={24} className="text-orange-600" />
@@ -708,6 +708,24 @@ const CustomerInfo = ({ data }) => {
                               YoY {filteredMetrics.avg >= filteredMetrics.prevAvg ? '+' : ''}{filteredMetrics.prevAvg ? (((filteredMetrics.avg - filteredMetrics.prevAvg)/filteredMetrics.prevAvg)*100).toFixed(1) : 0}%
                            </div>
                         )}
+                     </div>
+                  </div>
+               </div>
+               
+               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-purple-200 transition-colors">
+                  <div className="bg-purple-50 p-4 rounded-2xl mr-5 group-hover:bg-purple-100 transition-colors">
+                     <Calendar size={24} className="text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">3-Month Average</p>
+                     <div className="flex items-end justify-between">
+                        <div className="min-w-0 pr-2">
+                           <p className="text-[1.1rem] xl:text-[1.2rem] font-black text-gray-800 leading-tight truncate">{avg3Months ? formatCurrency(avg3Months.avgRev) : 0}</p>
+                           <p className="text-[0.65rem] xl:text-[0.7rem] font-semibold text-gray-500 mt-0.5 truncate">{avg3Months ? formatNumberFull(avg3Months.avgVol) : 0} pcs / mo</p>
+                        </div>
+                        <div className={`text-[9px] xl:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 whitespace-nowrap`}>
+                           {avg3Months?.monthsCount || 0} Mos Base
+                        </div>
                      </div>
                   </div>
                </div>

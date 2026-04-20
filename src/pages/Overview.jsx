@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart, ReferenceLine, Treemap
+  PieChart, Pie, Cell, LabelList, LineChart, Line, ComposedChart, ReferenceLine, Treemap, Label
 } from 'recharts';
 import { TrendingUp, Users, Package, DollarSign, Activity, Filter, RefreshCw, Download, PieChart as PieIcon } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
@@ -855,6 +855,15 @@ const Overview = ({ data }) => {
                    {customerConcentrationData.map((entry, index) => (
                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                    ))}
+                   <Label 
+                     position="center"
+                     content={({ viewBox: { cx, cy } }) => (
+                       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
+                         <tspan x={cx} dy="-0.3em" fontSize="16" fontWeight="bold" fill="#1f2937">Top 5</tspan>
+                         <tspan x={cx} dy="1.2em" fontSize="10" fill="#6b7280">Dependence</tspan>
+                       </text>
+                     )}
+                   />
                  </Pie>
                  <Tooltip formatter={(val) => formatCurrency(val)} />
                  <Legend 
@@ -869,10 +878,6 @@ const Overview = ({ data }) => {
                  />
                </PieChart>
             </ResponsiveContainer>
-             <div className="absolute top-[50%] left-[40%] transform -translate-x-[50%] -translate-y-[50%] text-center pointer-events-none">
-               <p className="text-base font-bold text-gray-800">Top 5</p>
-               <p className="text-[10px] text-gray-500 font-medium">Dependence</p>
-             </div>
           </div>
         </div>
         

@@ -87,22 +87,15 @@ const AtRiskCustomers = ({ data }) => {
     const fmParts = fm.split(' ');
     const targetVal = parseInt(fmParts[1] || 0) * 100 + (targetMToNum[fmParts[0]] || 0);
 
-    // Filter and Sort chronological
-    const sortedData = [...data].filter(r => {
+    // Filter chronological
+    const filteredData = data.filter(r => {
        const mPart = r['เดือน'] || r.month;
        const yPart = r['ปี'] || r.year || 2026;
        const val = parseInt(yPart) * 100 + (targetMToNum[mPart] || 0);
        return val <= targetVal; // Only keep data up to the selected month
-    }).sort((a,b) => {
-      const mToNum = targetMToNum;
-      const yearA = parseInt(a['ปี'] || a.year || 2026);
-      const yearB = parseInt(b['ปี'] || b.year || 2026);
-      const valA = yearA * 100 + (mToNum[a['เดือน'] || a.month] || 0);
-      const valB = yearB * 100 + (mToNum[b['เดือน'] || b.month] || 0);
-      return valA - valB; 
     });
 
-    sortedData.forEach(row => {
+    filteredData.forEach(row => {
       const name = row['ชื่อบัญชี'];
       const prov = row['จังหวัด'];
       const branch = row[' ชื่อที่ทำการไปรษณีย์'] || row['ชื่อที่ทำการไปรษณีย์'];
@@ -132,6 +125,15 @@ const AtRiskCustomers = ({ data }) => {
     });
 
     Object.values(custMap).forEach(cust => {
+        // Sort the custom array chronologically
+        cust.monthlyDataArr.sort((a,b) => {
+            const pa = a.month.split(' ');
+            const pb = b.month.split(' ');
+            const va = parseInt(pa[1]||2026)*100 + (targetMToNum[pa[0]]||0);
+            const vb = parseInt(pb[1]||2026)*100 + (targetMToNum[pb[0]]||0);
+            return va - vb;
+        });
+
         // Pad the selected month if it's missing (it means revenue was 0 in filterMonth)
         if (cust.monthlyDataArr.length > 0) {
             const lastMth = cust.monthlyDataArr[cust.monthlyDataArr.length - 1].month;

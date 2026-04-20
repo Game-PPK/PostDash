@@ -10,36 +10,6 @@ import MultiSelectDropdown from '../components/MultiSelectDropdown';
 // Common colors for charts
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F', '#ffbb28', '#FF8042', '#00C49F'];
 
-const CustomTreemapContent = (props) => {
-  const { root, depth, x, y, width, height, index, name, value } = props;
-  return (
-    <g>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        style={{
-          fill: COLORS[index % COLORS.length] || '#8884d8',
-          stroke: '#fff',
-          strokeWidth: 2,
-        }}
-      />
-      {width > 65 && height > 30 && (
-        <text
-          x={x + width / 2}
-          y={y + height / 2 + 4}
-          textAnchor="middle"
-          fill="#fff"
-          fontSize={10}
-          fontWeight="500"
-        >
-          {name?.length > 20 ? name.substring(0, 20) + '...' : name}
-        </text>
-      )}
-    </g>
-  );
-};
 
 const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 
@@ -442,26 +412,37 @@ const Overview = ({ data }) => {
     return Object.values(provinceMap).sort((a,b) => b.revenue - a.revenue);
   }, [filteredData]);
 
-  const serviceTypeData = useMemo(() => {
-    const typeMap = {};
+  const customerConcentrationData = useMemo(() => {
+    const custMap = {};
+    let totalRev = 0;
     filteredData.forEach(row => {
-      let t = row.serviceType || row['ชื่อบริการ'] || row['ประเภทบริการ'];
-      if (!t || t === '-') return;
+      const rev = row['รายได้'] || 0;
+      if (rev <= 0) return;
+      const name = row['ชื่อบัญชี'];
+      if (!name || name === '-') return;
       
-      // Simplify service name for display
-      if (t.includes('Package')) {
-         t = 'EMS Package';
-      } else if (t.includes('EMSในฯ') || t.includes('EMS ในฯ')) {
-         t = 'EMS Domestic';
-      } else if (t === 'ระหว่างประเทศ') {
-         t = 'International';
-      }
-
-      if (!typeMap[t]) typeMap[t] = { name: t, value: 0 };
-      typeMap[t].value += row['รายได้'] || 0;
+      if (!custMap[name]) custMap[name] = 0;
+      custMap[name] += rev;
+      totalRev += rev;
     });
-    // Sort descending
-    return Object.values(typeMap).sort((a,b) => b.value - a.value);
+    
+    const sorted = Object.entries(custMap)
+      .map(([name, value]) => ({ name, value, pct: ((value/(totalRev || 1))*100).toFixed(1) }))
+      .sort((a,b) => b.value - a.value);
+      
+    if (sorted.length === 0) return [];
+    
+    const top = sorted.slice(0, 5);
+    const topRev = top.reduce((s, c) => s + c.value, 0);
+    
+    if (sorted.length > 5) {
+       top.push({ 
+          name: 'ลูกค้ารายอื่นๆ รวมกัน (Others)', 
+          value: totalRev - topRev, 
+          pct: (((totalRev - topRev)/(totalRev || 1))*100).toFixed(1) 
+       });
+    }
+    return top;
   }, [filteredData]);
 
   const membershipData = useMemo(() => {
@@ -855,22 +836,43 @@ const Overview = ({ data }) => {
           </div>
         </div>
 
-        {/* Top Service Types Chart */}
+        {/* Customer Concentration Chart */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Rev Share: Service Types</h3>
-          <div className="h-80 w-full">
+          <h3 className="text-lg font-semibold text-gray-800 mb-6">Customer Concentration</h3>
+          <div className="h-80 w-full relative">
             <ResponsiveContainer>
-              <Treemap
-                data={serviceTypeData}
-                dataKey="value"
-                aspectRatio={4 / 3}
-                stroke="#fff"
-                fill="#8884d8"
-                content={<CustomTreemapContent />}
-              >
-                <Tooltip formatter={(val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val)} />
-              </Treemap>
+              <PieChart>
+                 <Pie
+                   data={customerConcentrationData}
+                   cx="40%"
+                   cy="50%"
+                   innerRadius={65}
+                   outerRadius={95}
+                   paddingAngle={2}
+                   dataKey="value"
+                   stroke="none"
+                 >
+                   {customerConcentrationData.map((entry, index) => (
+                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                   ))}
+                 </Pie>
+                 <Tooltip formatter={(val) => formatCurrency(val)} />
+                 <Legend 
+                   layout="vertical" 
+                   verticalAlign="middle" 
+                   align="right"
+                   wrapperStyle={{ fontSize: '11px', width: '45%' }}
+                   formatter={(value, entry) => {
+                     const t = value.length > 20 ? value.substring(0, 18) + '...' : value;
+                     return <span className="text-gray-700" title={value}>{t} ({entry.payload?.pct}%)</span>;
+                   }}
+                 />
+               </PieChart>
             </ResponsiveContainer>
+             <div className="absolute top-[50%] left-[40%] transform -translate-x-[50%] -translate-y-[50%] text-center pointer-events-none">
+               <p className="text-base font-bold text-gray-800">Top 5</p>
+               <p className="text-[10px] text-gray-500 font-medium">Dependence</p>
+             </div>
           </div>
         </div>
         

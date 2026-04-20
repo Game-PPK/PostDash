@@ -652,14 +652,14 @@ const Overview = ({ data }) => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 relative overflow-hidden group border-purple-100">
-           <div className="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-cyan-100 relative overflow-hidden group">
+           <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
            <div className="flex items-center space-x-3 mb-4">
-            <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><TrendingUp size={20} /></div>
-            <h3 className="text-gray-500 font-medium">Domestic Share</h3>
+            <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg"><TrendingUp size={20} /></div>
+            <h3 className="text-gray-500 font-medium tracking-tight whitespace-nowrap">Av. Rev/Account</h3>
           </div>
-          <p className="text-3xl font-bold text-gray-800">{summary.domesticShare.toFixed(1)}%</p>
-          <p className="text-xs text-gray-400 mt-2">Intl: {summary.intlShare.toFixed(1)}%</p>
+          <p className="text-3xl font-bold text-gray-800 break-words">{formatCurrency(summary.activeAccounts ? summary.totalRev / summary.activeAccounts : 0)}</p>
+          <p className="text-xs text-gray-400 mt-2">รายได้เฉลี่ยต่อบัญชี</p>
         </div>
       </div>
 

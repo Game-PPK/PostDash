@@ -462,6 +462,45 @@ const CustomerInfo = ({ data }) => {
      return res;
   }, [cust]);
 
+  const avg3Months = useMemo(() => {
+    if (!cust || !cust.monthlyDataArr || cust.monthlyDataArr.length === 0) return null;
+
+    // Use filtered months or fall back to all months sorted
+    let source = [...cust.monthlyDataArr];
+
+    // Filter by selected year if applicable
+    if (filterYear.length > 0) {
+      source = source.filter(m => filterYear.includes(m.yearText));
+    }
+
+    // Sort by date ascending (already sorted, but ensure)
+    const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
+    source.sort((a, b) => {
+      const valA = parseInt(a.yearText) * 100 + (mToNum[a.mText] || 0);
+      const valB = parseInt(b.yearText) * 100 + (mToNum[b.mText] || 0);
+      return valA - valB;
+    });
+
+    // If filterMonth is set, use that month as base; otherwise use last available month
+    let baseIdx = source.length - 1;
+    if (filterMonth.length > 0) {
+      const idx = source.findLastIndex(m => filterMonth.includes(m.mText));
+      if (idx !== -1) baseIdx = idx;
+    }
+
+    // Take up to 3 months ending at baseIdx
+    const slice = source.slice(Math.max(0, baseIdx - 2), baseIdx + 1);
+    if (slice.length === 0) return null;
+
+    const totalRev = slice.reduce((s, m) => s + m.revenue, 0);
+    const totalVol = slice.reduce((s, m) => s + m.volume, 0);
+    return {
+      avgRev: totalRev / slice.length,
+      avgVol: totalVol / slice.length,
+      monthsCount: slice.length,
+    };
+  }, [cust, filterYear, filterMonth]);
+
   const aiInsights = useMemo(() => {
     if (!cust || !cust.monthlyDataArr || cust.monthlyDataArr.length === 0) return null;
     
@@ -1075,6 +1114,43 @@ const CustomerInfo = ({ data }) => {
                 <div className="pt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-400 mb-1 font-medium">วันสิ้นสุดสัญญา (Contract End)</p>
                   <p className="text-sm font-bold text-gray-800">{cust.contractEnd}</p>
+                </div>
+
+                {/* Last 3 Months Revenue / Volume */}
+                <div className="pt-3 border-t border-gray-100">
+                  <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">3 เดือนล่าสุด (Revenue / Volume)</p>
+                  <div className="space-y-2">
+                    {chartData.slice(-3).map((m, i) => (
+                      <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 hover:bg-indigo-50/60 transition-colors">
+                        <span className="text-xs font-bold text-gray-600 w-20 truncate">{m.mText}</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-black text-indigo-700 leading-tight">{formatCurrency(m.revenue)}</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 leading-tight">{formatNumberFull(m.volume)} pcs</span>
+                        </div>
+                        <div className="flex flex-col items-end ml-2">
+                          {m.revChange !== undefined && m.revChange !== 0 && (
+                            <span className={`text-[9px] font-black px-1 py-0.5 rounded ${m.revChange >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+                              {m.revChange >= 0 ? '▲' : '▼'}{Math.abs(m.revChange).toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 3-Month Average Summary Row */}
+                  {avg3Months && (
+                    <div className="mt-3 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={12} className="text-purple-500" />
+                        <span className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Avg ({avg3Months.monthsCount} mo)</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs font-black text-indigo-700 leading-tight">{formatCurrency(avg3Months.avgRev)}</span>
+                        <span className="text-[10px] font-semibold text-emerald-600 leading-tight">{formatNumberFull(avg3Months.avgVol)} pcs</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

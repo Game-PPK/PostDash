@@ -567,7 +567,7 @@ const Overview = ({ data }) => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div onClick={() => setSelectedTrendMetric('revenue')} className={`cursor-pointer bg-white p-6 rounded-2xl shadow-sm border ${selectedTrendMetric === 'revenue' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-orange-100'} relative overflow-hidden group transition-all transform hover:-translate-y-1`}>
           <div className="absolute top-0 right-0 w-24 h-24 bg-orange-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
           <div className="flex items-center space-x-3 mb-4">
@@ -650,16 +650,6 @@ const Overview = ({ data }) => {
                </div>
              )}
           </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-cyan-100 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-           <div className="flex items-center space-x-3 mb-4">
-            <div className="p-2 bg-cyan-100 text-cyan-600 rounded-lg"><TrendingUp size={20} /></div>
-            <h3 className="text-gray-500 font-medium tracking-tight whitespace-nowrap">Av. Rev/Account</h3>
-          </div>
-          <p className="text-3xl font-bold text-gray-800 break-words">{formatCurrency(summary.activeAccounts ? summary.totalRev / summary.activeAccounts : 0)}</p>
-          <p className="text-xs text-gray-400 mt-2">รายได้เฉลี่ยต่อบัญชี</p>
         </div>
       </div>
 

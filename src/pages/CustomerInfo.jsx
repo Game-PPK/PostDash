@@ -374,7 +374,15 @@ const CustomerInfo = ({ data }) => {
   // Derived Donut Chart Data
   const servicePieData = useMemo(() => {
      if (!cust) return [];
-     return Object.entries(cust.services).map(([name, value]) => ({name, value})).sort((a,b)=>b.value-a.value);
+     const sorted = Object.entries(cust.services).map(([name, value]) => ({name, value})).sort((a,b)=>b.value-a.value);
+     
+     if (sorted.length > 6) {
+        const top = sorted.slice(0, 5);
+        const othersValue = sorted.slice(5).reduce((sum, item) => sum + item.value, 0);
+        if (othersValue > 0) top.push({ name: 'อื่นๆ (Others)', value: othersValue });
+        return top;
+     }
+     return sorted;
   }, [cust]);
 
   // Quarterly and Yearly Data

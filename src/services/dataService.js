@@ -11,8 +11,37 @@ const CSV_URLS = [
   'https://docs.google.com/spreadsheets/d/e/2PACX-1vS5DUXfJGnMTXD07HDMk6m_d7-zQdHytoWmEP9mXmq4wtgmnVI4sbXkv1x22rgeIyeqJcDgaSCKTRGF/pub?output=csv'
 ];
 
+const META_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSKWg-wsjpfz3jRh3kACjKRsB_k1hKa_bX4u-_TdBaozYutXa1LjgPwKyPAHZV1cd5yPMqWiWyMjblO/pub?output=csv';
+
 export const fetchDashboardData = async () => {
   try {
+    const metaPromise = new Promise((resolve) => {
+        Papa.parse(META_URL, {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                const dict = {};
+                results.data.forEach(row => {
+                    const name = row['ชื่อบัญชี'];
+                    if (name) {
+                        dict[name] = {
+                            contractEnd: row['วันสิ้นสุดสัญญา'] || '-',
+                            serviceType: row['ประเภทบริการ'] || '-',
+                            customerType: row['ประเภทลูกค้า'] || '-',
+                            volumeCriteria: row['เกณฑ์ชิ้นงาน'] || '-'
+                        };
+                    }
+                });
+                resolve(dict);
+            },
+            error: (err) => {
+                console.error("Error parsing metadata CSV:", err);
+                resolve({});
+            }
+        });
+    });
+
     const allDataPromises = CSV_URLS.map(url => {
         return new Promise((resolve) => {
           Papa.parse(url, {
@@ -39,9 +68,6 @@ export const fetchDashboardData = async () => {
                   'month': row['เดือน'] || 'Unknown',
                   'year': row['ปี'] || 'Unknown',
                   'date': row['วันที่'] || 'N/A',
-                  'contractEnd': row['วันสิ้นสุดสัญญา'] || 'N/A',
-                  'customerType': row['ประเภทลูกค้า'] || '-',
-                  'volumeCriteria': row['เกณฑ์ชิ้นงาน'] || '-',
                   'membership': row['ระดับสมาชิก'] || '-'
                 };
               });
@@ -55,10 +81,26 @@ export const fetchDashboardData = async () => {
         });
     });
 
-    const allResults = await Promise.all(allDataPromises);
+    const [metaDict, ...allResults] = await Promise.all([metaPromise, ...allDataPromises]);
     const combinedData = allResults.flat();
     
-    return combinedData;
+    const finalData = combinedData.map(row => {
+         const name = row['ชื่อบัญชี'];
+         const meta = metaDict[name] || {};
+         return {
+             ...row,
+             'วันสิ้นสุดสัญญา': meta.contractEnd || row['วันสิ้นสุดสัญญา'] || 'N/A',
+             'ประเภทบริการ': meta.serviceType || row['ประเภทบริการ'] || '-',
+             'ประเภทลูกค้า': meta.customerType || row['ประเภทลูกค้า'] || '-',
+             'เกณฑ์ชิ้นงาน': meta.volumeCriteria || row['เกณฑ์ชิ้นงาน'] || '-',
+             contractEnd: meta.contractEnd || row['วันสิ้นสุดสัญญา'] || 'N/A',
+             customerType: meta.customerType || row['ประเภทลูกค้า'] || '-',
+             volumeCriteria: meta.volumeCriteria || row['เกณฑ์ชิ้นงาน'] || '-',
+             serviceType: meta.serviceType || row['ประเภทบริการ'] || '-'
+         };
+    });
+    
+    return finalData;
 
   } catch (error) {
     console.error("Failed to load combined dashboard data", error);

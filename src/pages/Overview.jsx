@@ -10,6 +10,37 @@ import MultiSelectDropdown from '../components/MultiSelectDropdown';
 // Common colors for charts
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#0088FE', '#00C49F', '#ffbb28', '#FF8042', '#00C49F'];
 
+const CustomTreemapContent = (props) => {
+  const { x, y, width, height, index, name } = props;
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        style={{
+          fill: COLORS[index % COLORS.length] || '#8884d8',
+          stroke: '#fff',
+          strokeWidth: 2,
+        }}
+      />
+      {width > 65 && height > 30 && (
+        <text
+          x={x + width / 2}
+          y={y + height / 2 + 4}
+          textAnchor="middle"
+          fill="#fff"
+          fontSize={10}
+          fontWeight="500"
+        >
+          {name?.length > 20 ? name.substring(0, 20) + '...' : name}
+        </text>
+      )}
+    </g>
+  );
+};
+
 
 const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 
@@ -25,6 +56,7 @@ const Overview = ({ data }) => {
   const [membershipMetric, setMembershipMetric] = useState('revenue');
   const [trendChartType, setTrendChartType] = useState('bar');
   const [topLimit, setTopLimit] = useState(10);
+  const [concentrationView, setConcentrationView] = useState('customer');
   const dashboardRef = useRef(null);
 
   // Initialize defaults
@@ -445,6 +477,21 @@ const Overview = ({ data }) => {
     return top;
   }, [filteredData]);
 
+  const branchConcentrationData = useMemo(() => {
+    const branchMap = {};
+    filteredData.forEach(row => {
+      const rev = row['รายได้'] || 0;
+      if (rev <= 0) return;
+      const name = row[' ชื่อที่ทำการไปรษณีย์'] || row['ชื่อที่ทำการไปรษณีย์'];
+      if (!name || name === '-') return;
+
+      if (!branchMap[name]) branchMap[name] = { name: name, value: 0 };
+      branchMap[name].value += rev;
+    });
+
+    return Object.values(branchMap).sort((a,b) => b.value - a.value);
+  }, [filteredData]);
+
   const membershipData = useMemo(() => {
     const memMap = {};
     filteredData.forEach(row => {
@@ -836,48 +883,82 @@ const Overview = ({ data }) => {
           </div>
         </div>
 
-        {/* Customer Concentration Chart */}
+        {/* Concentration Analysis Chart */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-6">Customer Concentration</h3>
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-800">Concentration Analysis</h3>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              <button 
+                onClick={() => setConcentrationView('customer')} 
+                className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${concentrationView === 'customer' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Customer VIP
+              </button>
+              <button 
+                onClick={() => setConcentrationView('branch')} 
+                className={`text-xs px-3 py-1 rounded-md font-medium transition-colors ${concentrationView === 'branch' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Branch Rev
+              </button>
+            </div>
+          </div>
+
           <div className="h-80 w-full relative">
-            <ResponsiveContainer>
-              <PieChart>
-                 <Pie
-                   data={customerConcentrationData}
-                   cx="40%"
-                   cy="50%"
-                   innerRadius={65}
-                   outerRadius={95}
-                   paddingAngle={2}
-                   dataKey="value"
-                   stroke="none"
-                 >
-                   {customerConcentrationData.map((entry, index) => (
-                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                   ))}
-                   <Label 
-                     position="center"
-                     content={({ viewBox: { cx, cy } }) => (
-                       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
-                         <tspan x={cx} dy="-0.3em" fontSize="16" fontWeight="bold" fill="#1f2937">Top 5</tspan>
-                         <tspan x={cx} dy="1.2em" fontSize="10" fill="#6b7280">Dependence</tspan>
-                       </text>
-                     )}
-                   />
-                 </Pie>
-                 <Tooltip formatter={(val) => formatCurrency(val)} />
-                 <Legend 
-                   layout="vertical" 
-                   verticalAlign="middle" 
-                   align="right"
-                   wrapperStyle={{ fontSize: '11px', width: '45%' }}
-                   formatter={(value, entry) => {
-                     const t = value.length > 20 ? value.substring(0, 18) + '...' : value;
-                     return <span className="text-gray-700" title={value}>{t} ({entry.payload?.pct}%)</span>;
-                   }}
-                 />
-               </PieChart>
-            </ResponsiveContainer>
+            {concentrationView === 'customer' ? (
+              <>
+                <ResponsiveContainer>
+                  <PieChart>
+                     <Pie
+                       data={customerConcentrationData}
+                       cx="40%"
+                       cy="50%"
+                       innerRadius={65}
+                       outerRadius={95}
+                       paddingAngle={2}
+                       dataKey="value"
+                       stroke="none"
+                     >
+                       {customerConcentrationData.map((entry, index) => (
+                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                       ))}
+                       <Label 
+                         position="center"
+                         content={({ viewBox: { cx, cy } }) => (
+                           <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
+                             <tspan x={cx} dy="-0.3em" fontSize="16" fontWeight="bold" fill="#1f2937">Top 5</tspan>
+                             <tspan x={cx} dy="1.2em" fontSize="10" fill="#6b7280">Dependence</tspan>
+                           </text>
+                         )}
+                       />
+                     </Pie>
+                     <Tooltip formatter={(val) => formatCurrency(val)} />
+                     <Legend 
+                       layout="vertical" 
+                       verticalAlign="middle" 
+                       align="right"
+                       wrapperStyle={{ fontSize: '11px', width: '45%' }}
+                       formatter={(value, entry) => {
+                         const t = value.length > 20 ? value.substring(0, 18) + '...' : value;
+                         return <span className="text-gray-700" title={value}>{t} ({entry.payload?.pct}%)</span>;
+                       }}
+                     />
+                   </PieChart>
+                </ResponsiveContainer>
+              </>
+            ) : (
+              <ResponsiveContainer>
+                <Treemap
+                  data={branchConcentrationData}
+                  dataKey="value"
+                  aspectRatio={4 / 3}
+                  stroke="#fff"
+                  fill="#8884d8"
+                  content={<CustomTreemapContent />}
+                >
+                  <Tooltip formatter={(val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 0 }).format(val)} />
+                </Treemap>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
         

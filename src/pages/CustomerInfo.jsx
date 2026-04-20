@@ -699,7 +699,7 @@ const CustomerInfo = ({ data }) => {
         {cust && (
           <div className="space-y-6">
             {/* Quick Totals KPI Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-orange-200 transition-colors">
                   <div className="bg-orange-50 p-4 rounded-2xl mr-5 group-hover:bg-orange-100 transition-colors">
                      <DollarSign size={24} className="text-orange-600" />
@@ -747,24 +747,6 @@ const CustomerInfo = ({ data }) => {
                               YoY {filteredMetrics.avg >= filteredMetrics.prevAvg ? '+' : ''}{filteredMetrics.prevAvg ? (((filteredMetrics.avg - filteredMetrics.prevAvg)/filteredMetrics.prevAvg)*100).toFixed(1) : 0}%
                            </div>
                         )}
-                     </div>
-                  </div>
-               </div>
-               
-               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center group hover:border-purple-200 transition-colors">
-                  <div className="bg-purple-50 p-4 rounded-2xl mr-5 group-hover:bg-purple-100 transition-colors">
-                     <Calendar size={24} className="text-purple-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">3-Month Average</p>
-                     <div className="flex items-end justify-between">
-                        <div className="min-w-0 pr-2">
-                           <p className="text-[1.1rem] xl:text-[1.2rem] font-black text-gray-800 leading-tight truncate">{avg3Months ? formatCurrency(avg3Months.avgRev) : 0}</p>
-                           <p className="text-[0.65rem] xl:text-[0.7rem] font-semibold text-gray-500 mt-0.5 truncate">{avg3Months ? formatNumberFull(avg3Months.avgVol) : 0} pcs / mo</p>
-                        </div>
-                        <div className={`text-[9px] xl:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 whitespace-nowrap`}>
-                           {avg3Months?.monthsCount || 0} Mos Base
-                        </div>
                      </div>
                   </div>
                </div>
@@ -1119,19 +1101,36 @@ const CustomerInfo = ({ data }) => {
                 {/* Last 3 Months Revenue / Volume */}
                 <div className="pt-3 border-t border-gray-100">
                   <p className="text-xs text-gray-400 mb-3 font-medium uppercase tracking-wider">3 เดือนล่าสุด (Revenue / Volume)</p>
-                  <div className="space-y-2">
+
+                  {/* Header row */}
+                  <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 px-3 mb-1">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">เดือน</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase text-right">Revenue / Volume</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase text-right w-12">%</span>
+                  </div>
+
+                  <div className="space-y-1.5">
                     {chartData.slice(-3).map((m, i) => (
-                      <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 hover:bg-indigo-50/60 transition-colors">
-                        <span className="text-xs font-bold text-gray-600 w-20 truncate">{m.mText}</span>
+                      <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center bg-gray-50 rounded-xl px-3 py-2.5 hover:bg-indigo-50/50 transition-colors">
+                        {/* Month name */}
+                        <span className="text-xs font-bold text-gray-700 truncate">{m.mText}</span>
+
+                        {/* Revenue + Volume stacked, right-aligned */}
                         <div className="flex flex-col items-end">
-                          <span className="text-xs font-black text-indigo-700 leading-tight">{formatCurrency(m.revenue)}</span>
-                          <span className="text-[10px] font-semibold text-emerald-600 leading-tight">{formatNumberFull(m.volume)} pcs</span>
+                          <span className="text-xs font-black text-indigo-700 leading-tight tabular-nums">{formatCurrency(m.revenue)}</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 leading-tight tabular-nums">{formatNumberFull(m.volume)} pcs</span>
                         </div>
-                        <div className="flex flex-col items-end ml-2">
-                          {m.revChange !== undefined && m.revChange !== 0 && (
-                            <span className={`text-[9px] font-black px-1 py-0.5 rounded ${m.revChange >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'}`}>
+
+                        {/* Change badge, fixed width so it never shifts */}
+                        <div className="w-12 flex justify-end">
+                          {m.revChange !== undefined && m.revChange !== 0 ? (
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md whitespace-nowrap ${
+                              m.revChange >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                            }`}>
                               {m.revChange >= 0 ? '▲' : '▼'}{Math.abs(m.revChange).toFixed(1)}%
                             </span>
+                          ) : (
+                            <span className="text-[9px] text-gray-300 font-bold">—</span>
                           )}
                         </div>
                       </div>
@@ -1140,15 +1139,16 @@ const CustomerInfo = ({ data }) => {
 
                   {/* 3-Month Average Summary Row */}
                   {avg3Months && (
-                    <div className="mt-3 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl px-3 py-2">
+                    <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-x-3 items-center bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl px-3 py-2.5">
                       <div className="flex items-center gap-1.5">
-                        <Calendar size={12} className="text-purple-500" />
-                        <span className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Avg ({avg3Months.monthsCount} mo)</span>
+                        <Calendar size={11} className="text-purple-500 flex-shrink-0" />
+                        <span className="text-[10px] font-black text-purple-700 uppercase tracking-wider whitespace-nowrap">Avg {avg3Months.monthsCount} mo</span>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-xs font-black text-indigo-700 leading-tight">{formatCurrency(avg3Months.avgRev)}</span>
-                        <span className="text-[10px] font-semibold text-emerald-600 leading-tight">{formatNumberFull(avg3Months.avgVol)} pcs</span>
+                        <span className="text-xs font-black text-indigo-700 leading-tight tabular-nums">{formatCurrency(avg3Months.avgRev)}</span>
+                        <span className="text-[10px] font-semibold text-emerald-600 leading-tight tabular-nums">{formatNumberFull(avg3Months.avgVol)} pcs</span>
                       </div>
+                      <div className="w-12" />
                     </div>
                   )}
                 </div>

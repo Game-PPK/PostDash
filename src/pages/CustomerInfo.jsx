@@ -1040,24 +1040,17 @@ const CustomerInfo = ({ data }) => {
 
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
               <h3 className="text-base font-bold text-gray-800 mb-4 uppercase tracking-wider">Revenue by Service</h3>
-              <div className="h-48 w-full">
+              <div className="h-56 w-full">
                 <ResponsiveContainer>
-                  <PieChart>
-                    <Pie 
-                      data={servicePieData} 
-                      cx="50%" cy="50%" 
-                      innerRadius={40} outerRadius={65} 
-                      fill="#8884d8" 
-                      paddingAngle={4} 
-                      dataKey="value" 
-                      stroke="none"
-                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-                    >
+                  <BarChart data={servicePieData} layout="vertical" margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} />
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10, fill: '#6b7280' }} interval={0} />
+                    <Tooltip cursor={{fill: 'transparent'}} formatter={(val) => formatCurrency(val)} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
                       {servicePieData.map((e, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip formatter={(val) => formatCurrency(val)} />
-                    <Legend layout="horizontal" verticalAlign="bottom" align="center" iconType="circle" wrapperStyle={{fontSize: "10px", paddingTop: "20px"}}/>
-                  </PieChart>
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>

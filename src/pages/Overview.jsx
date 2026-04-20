@@ -838,14 +838,17 @@ const Overview = ({ data }) => {
         {/* Top Service Types Chart */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <h3 className="text-lg font-semibold text-gray-800 mb-6">Rev Share: Service Types</h3>
-          <div className="h-80 w-full flex justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={serviceTypeData} cx="50%" cy="50%" innerRadius={80} outerRadius={110} fill="#8884d8" paddingAngle={5} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                  {serviceTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(value) => formatCurrency(value)} />
-              </PieChart>
+          <div className="h-80 w-full">
+            <ResponsiveContainer>
+              <BarChart data={serviceTypeData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} vertical={true} />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 11, fill: '#6b7280' }} interval={0} />
+                <Tooltip cursor={{fill: 'transparent'}} formatter={(val) => formatCurrency(val)} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
+                   {serviceTypeData.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>

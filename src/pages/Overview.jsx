@@ -414,8 +414,8 @@ const Overview = ({ data }) => {
   const serviceTypeData = useMemo(() => {
     const typeMap = {};
     filteredData.forEach(row => {
-      let t = row['ชื่อบริการ'];
-      if (!t) return;
+      let t = row.serviceType || row['ชื่อบริการ'] || row['ประเภทบริการ'];
+      if (!t || t === '-') return;
       
       // Simplify service name for display
       if (t.includes('Package')) {
@@ -429,7 +429,19 @@ const Overview = ({ data }) => {
       if (!typeMap[t]) typeMap[t] = { name: t, value: 0 };
       typeMap[t].value += row['รายได้'] || 0;
     });
-    return Object.values(typeMap);
+    
+    // Sort descending
+    const sorted = Object.values(typeMap).sort((a,b) => b.value - a.value);
+    
+    // Group long tail into "อื่นๆ (Others)" if there are more than 6 slices
+    if (sorted.length > 6) {
+       const top = sorted.slice(0, 5);
+       const othersValue = sorted.slice(5).reduce((sum, item) => sum + item.value, 0);
+       if (othersValue > 0) top.push({ name: 'อื่นๆ (Others)', value: othersValue });
+       return top;
+    }
+    
+    return sorted;
   }, [filteredData]);
 
   const membershipData = useMemo(() => {

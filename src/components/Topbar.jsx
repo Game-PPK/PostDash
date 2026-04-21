@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Bell, CheckSquare, Square, Calendar, LogOut, BarChart2 } from 'lucide-react';
+import { Bell, CheckSquare, Square, Calendar, LogOut, BarChart2, Package } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
@@ -134,9 +134,20 @@ const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
             target="_blank" 
             rel="noopener noreferrer"
             title="Go to Revenue Dashboard"
-            className="p-2 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors mr-1"
+            className="p-2 text-gray-400 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-colors"
          >
             <BarChart2 size={20} />
+         </a>
+
+         {/* Package A11-A12 ปข.6 Link */}
+         <a 
+            href="https://package-reg6.vercel.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            title="Package A11-A12 ในสังกัด ปข.6"
+            className="p-2 text-gray-400 hover:text-purple-600 rounded-full hover:bg-purple-50 transition-colors mr-1"
+         >
+            <Package size={20} />
          </a>
          
         <div className="relative" ref={notifRef}>

@@ -3,9 +3,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, ComposedChart, Line, LabelList
 } from 'recharts';
-import { Download, FileSpreadsheet, FileText, Calendar } from 'lucide-react';
+import { FileText, Calendar } from 'lucide-react';
 
-import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
@@ -37,6 +36,7 @@ const FullReport = ({ data }) => {
       const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
       if (b) bSet.add(b);
     });
+    const filteredProvinces = filterProv.length > 0 ? filterProv : null;
     return {
       allYears: ['All', ...Array.from(ySet).sort((a,b) => parseInt(b) - parseInt(a))],
       allMonths: ['All', ...Array.from(mSet).sort((a,b) => (mToNum[a] || 0) - (mToNum[b] || 0))],
@@ -44,6 +44,25 @@ const FullReport = ({ data }) => {
       allBranches: ['All', ...Array.from(bSet).sort()]
     };
   }, [data]);
+
+  // Branch options filtered by selected provinces
+  const filteredBranchOptions = useMemo(() => {
+    if (filterProv.length === 0) return allBranches;
+    const bSet = new Set();
+    data.forEach(r => {
+      const prov = r['จังหวัด'];
+      if (filterProv.includes(prov)) {
+        const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+        if (b) bSet.add(b);
+      }
+    });
+    return ['All', ...Array.from(bSet).sort()];
+  }, [data, filterProv, allBranches]);
+
+  // Clear branch selection when province changes
+  useEffect(() => {
+    setFilterBranch([]);
+  }, [filterProv]);
 
   // Set default filters (Latest Year & Latest Month)
   useEffect(() => {
@@ -218,57 +237,46 @@ const FullReport = ({ data }) => {
   const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(val || 0);
   const formatNumber = (val) => new Intl.NumberFormat('th-TH').format(val || 0);
 
-  // Exports
-  const handleExportExcel = () => {
-    const wsData = [];
-    provData.forEach(p => {
-       p.branches.forEach(b => {
-          wsData.push({
-             'Province': p.name,
-             'Branch': b.name,
-             'Revenue (THB)': b.rev,
-             'Volume (Pcs)': b.vol,
-             'Avg Rev/Piece': b.vol ? (b.rev / b.vol).toFixed(2) : 0,
-             '% of Total Rev': ((b.rev / summary.totalRev) * 100).toFixed(2) + '%'
-          });
-       });
-    });
-    
-    if (wsData.length === 0) return;
-    const ws = XLSX.utils.json_to_sheet(wsData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Branch Detailed Report");
-    XLSX.writeFile(wb, `Insight_Report_${new Date().getTime()}.xlsx`);
-  };
 
+  // Exports
   const handleExportPDF = async () => {
     if (reportRef.current === null) return;
     try {
-      reportRef.current.classList.add('px-8', 'py-8');
-      const canvas = await html2canvas(reportRef.current, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
-      reportRef.current.classList.remove('px-8', 'py-8');
-
-      const imgData = canvas.toDataURL('image/jpeg');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      let heightLeft = pdfHeight;
-      let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pdf.internal.pageSize.getHeight();
-      
-      while (heightLeft >= 0) {
-        position = heightLeft - pdfHeight;
+      const canvas = await html2canvas(reportRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: reportRef.current.scrollWidth,
+        windowHeight: reportRef.current.scrollHeight,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      let heightLeft = imgH;
+      let yPos = 0;
+      pdf.addImage(imgData, 'JPEG', 0, yPos, imgW, imgH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        yPos -= pageH;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'JPEG', 0, yPos, imgW, imgH);
+        heightLeft -= pageH;
       }
-      pdf.save(`Insight_Report_${new Date().getTime()}.pdf`);
+      const ts = new Date();
+      const filename = `InsightReport_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}${String(ts.getDate()).padStart(2,'0')}.pdf`;
+      pdf.save(filename);
     } catch (e) {
-      console.error("PDF Export Error", e);
+      console.error('PDF Export Error:', e);
+      alert('เกิดข้อผิดพลาดในการสร้าง PDF กรุณาลองใหม่อีกครั้ง');
     }
   };
+
 
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -298,9 +306,6 @@ const FullReport = ({ data }) => {
              <button onClick={handleExportPDF} className="flex items-center text-sm font-semibold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm px-4 py-2 transition-colors">
                 <FileText size={16} className="mr-2" /> Download Report (PDF)
              </button>
-             <button onClick={handleExportExcel} className="flex items-center text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-sm border border-indigo-200 px-4 py-2 transition-colors">
-                <FileSpreadsheet size={16} className="mr-2" /> Download Data (Excel)
-             </button>
           </div>
         </div>
 
@@ -308,7 +313,7 @@ const FullReport = ({ data }) => {
           <MultiSelectDropdown label="Year" options={allYears} selectedValues={filterYear} onChange={setFilterYear} width="w-28" />
           <MultiSelectDropdown label="Month" options={allMonths} selectedValues={filterMonth} onChange={setFilterMonth} width="w-32" />
           <MultiSelectDropdown label="Province" options={allProvinces} selectedValues={filterProv} onChange={setFilterProv} width="w-48" />
-          <MultiSelectDropdown label="Branch" options={allBranches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-48" />
+          <MultiSelectDropdown label="Branch" options={filteredBranchOptions} selectedValues={filterBranch} onChange={setFilterBranch} width="w-48" />
           <button 
              onClick={() => { setFilterYear([]); setFilterMonth([]); setFilterProv([]); setFilterBranch([]); }} 
              className="text-[11px] bg-gray-100 border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-200 h-[32px] font-bold mt-auto mb-[2px] leading-none">

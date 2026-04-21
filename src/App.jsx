@@ -6,6 +6,7 @@ import Topbar from './components/Topbar';
 import Overview from './pages/Overview';
 import CustomerInfo from './pages/CustomerInfo';
 import BranchReport from './pages/BranchReport';
+import FullReport from './pages/FullReport';
 import Login from './pages/Login';
 import { ArrowUp } from 'lucide-react';
 import { fetchDashboardData } from './services/dataService';
@@ -58,6 +59,7 @@ const Dashboard = () => {
             {currentTab === 'overview' && <Overview data={data} />}
             {currentTab === 'customers' && <CustomerInfo data={data} />}
             {currentTab === 'reporting' && <BranchReport data={data} />}
+            {currentTab === 'full-report' && <FullReport data={data} />}
           </div>
         )}
       </main>

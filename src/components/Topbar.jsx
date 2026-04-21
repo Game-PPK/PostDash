@@ -8,6 +8,7 @@ const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
     { id: 'overview', label: 'Overview' },
     { id: 'customers', label: 'Customers' },
     { id: 'reporting', label: 'At-Risk Customers' },
+    { id: 'full-report', label: 'Reporting' },
   ];
 
   const [showNotifications, setShowNotifications] = useState(false);

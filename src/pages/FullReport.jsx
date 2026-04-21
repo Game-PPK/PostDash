@@ -106,8 +106,8 @@ const FullReport = ({ data }) => {
       const branch = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'] || 'Unknown';
       const custType = r['customerType'] || r['ประเภทลูกค้า'] || 'Unknown';
       
-      let memRaw = r.membership || '-';
-      let mem = (memRaw === '-' || memRaw === 'None' || memRaw.trim().toLowerCase() === 'customer') ? 'ไม่ได้เป็นสมาชิก' : memRaw;
+      let memRaw = r.membership !== undefined && r.membership !== null ? String(r.membership) : '-';
+      let mem = (memRaw === '-' || memRaw.trim() === 'None' || memRaw.trim().toLowerCase() === 'customer') ? 'ไม่ได้เป็นสมาชิก' : memRaw.trim();
       
       const custName = r['ชื่อบัญชี'];
 
@@ -467,13 +467,13 @@ const FullReport = ({ data }) => {
                               provData.slice(0, 10).map((prov, i) => (
                                  <tr key={`p-${i}`} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
                                     <td className="py-2 px-3 border-r border-gray-300 font-semibold">{prov.name}</td>
-                                    <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{prov.branches.length}</td>
+                                    <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{prov.branches?.length || 0}</td>
                                     <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatNumber(prov.vol)}</td>
                                     <td className="py-2 px-3 text-right font-bold text-indigo-900">{formatCurrency(prov.rev)}</td>
                                  </tr>
                               ))
                            ) : (
-                              provData[0]?.branches.slice(0, 15).map((b, i) => (
+                              (provData[0]?.branches || []).slice(0, 15).map((b, i) => (
                                  <tr key={`b-${i}`} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
                                     <td className="py-2 px-3 border-r border-gray-300 font-semibold">{b.name}</td>
                                     <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatNumber(b.vol)}</td>

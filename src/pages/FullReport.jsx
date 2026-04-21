@@ -78,11 +78,10 @@ const FullReport = ({ data }) => {
   }, [data, filterYear, filterProv]);
 
   // Calculate Insights and Formulate Narrative Paragraphs
-  const { summary, provData, customerTypeData, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
+  const { summary, provData, provPieData, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
     let totalRev = 0;
     let totalVol = 0;
     const pMap = {};
-    const ctMap = {};
     const mMap = {};
     const monthMap = {};
     const custMap = {};
@@ -110,10 +109,6 @@ const FullReport = ({ data }) => {
       if (!pMap[prov].branches[branch]) pMap[prov].branches[branch] = { name: branch, rev: 0, vol: 0 };
       pMap[prov].branches[branch].rev += rev;
       pMap[prov].branches[branch].vol += vol;
-
-      // Customer Type Map
-      if (!ctMap[custType]) ctMap[custType] = { name: custType, value: 0 };
-      ctMap[custType].value += rev;
 
       // Membership Map
       if (!mMap[mem]) mMap[mem] = { name: mem, value: 0, vol: 0 };
@@ -147,7 +142,12 @@ const FullReport = ({ data }) => {
        return p;
     }).sort((a,b) => b.rev - a.rev);
 
-    const ctArr = Object.values(ctMap).sort((a,b) => b.value - a.value);
+    let provPieData = provArr.slice(0, 5).map(p => ({ name: p.name, value: p.rev }));
+    if (provArr.length > 5) {
+       let otherRev = provArr.slice(5).reduce((sum, p) => sum + p.rev, 0);
+       provPieData.push({ name: 'จังหวัดอื่นๆ', value: otherRev });
+    }
+
     const memArr = Object.values(mMap).sort((a,b) => b.value - a.value);
     const topCustArr = Object.values(custMap).sort((a,b) => b.rev - a.rev).slice(0, 20);
     const trendArr = Object.values(monthMap).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
@@ -156,17 +156,16 @@ const FullReport = ({ data }) => {
     const avgRev = totalVol ? totalRev / totalVol : 0;
     const topProv = provArr.length > 0 ? provArr[0] : null;
     const topMonth = [...trendArr].sort((a,b) => b.revenue - a.revenue)[0];
-    const topCT = ctArr.length > 0 ? ctArr[0] : null;
 
     let para1 = "ระบบไม่สามารถประมวลผลคำบรรยายได้เนื่องจากไม่มีข้อมูลในขอบเขตที่เลือก";
     let para2 = ""; let para3 = "";
 
     if (totalRev > 0) {
-      const pTopCTRev = topCT ? ((topCT.value / totalRev)*100).toFixed(1) : 0;
+      const pTopProvRev = topProv ? ((topProv.rev / totalRev)*100).toFixed(1) : 0;
       
       para1 = `ในรอบการดำเนินงานประเมินผลนี้ ปรากฏรายได้รวมทั้งสิ้น ${totalRev.toLocaleString('th-TH', {maximumFractionDigits:0})} บาท จากปริมาณชิ้นงานที่ให้บริการรวมทั้งหมด ${totalVol.toLocaleString('th-TH')} ชิ้น โดยค่าเฉลี่ยรายได้ต่อชิ้นงานอยู่ที่ ${avgRev.toLocaleString('th-TH',{maximumFractionDigits:1})} บาทต่อชิ้น เมื่อเปรียบเทียบในแง่ของช่วงเวลาอย่างต่อเนื่อง (Annual Seasonality) พบว่าข้อมูลรายได้มีทิศทางเปลี่ยนแปลงตามช่วงเวลา โดย${topMonth ? `เดือนที่มีผลประกอบการหนาแน่นที่สุดคือ "เดือน${topMonth.name}" ซึ่งมีรายได้สูงถึง ${topMonth.revenue.toLocaleString('th-TH',{maximumFractionDigits:0})} บาท สะท้อนให้เห็นจุดสูงสุด (Peak Season) ของกรอบระยะเวลาดังกล่าว` : 'ข้อมูลการกระจายรายเดือนบ่งบอกถึงความทรงตัวของรายได้'}`;
 
-      para2 = `เจาะลึกมิติการ phân khúc ลูกค้า (Customer Segmentation) พบว่ากลุ่มลูกค้ารูปแบบ "${topCT ? topCT.name : 'ทั่วไป'}" เป็นปัจจัยหลักสำคัญที่ขับเคลื่อนโครงสร้างองค์กร คิดเป็นสัดส่วนรายได้กว่า ${pTopCTRev}% ของเม็ดเงินรวม ในขณะเดียวกัน ระดับความภักดีของลูกค้าที่จัดเก็บผ่านแผนระบบ Membership ถือว่าเป็นตัวเสริมความมั่นคงให้กับรายได้ประจำ ซึ่งสอดคล้องกันกับการกระจายตัวของประเภทผู้ใช้งานในภาพรวม`;
+      para2 = `เจาะลึกมิติการกระจายตัวของรายได้ตามพื้นที่การขาย พบว่าภูมิภาคจังหวัด "${topProv ? topProv.name : 'ทั่วไป'}" เป็นปัจจัยหลักสำคัญที่ขับเคลื่อนโครงสร้างองค์กร คิดเป็นสัดส่วนรายได้กว่า ${pTopProvRev}% ของเม็ดเงินรวม ในขณะเดียวกัน ระดับความภักดีของลูกค้าที่จัดเก็บผ่านแผนระบบ Membership ถือว่าเป็นตัวเสริมความมั่นคงให้กับรายได้ประจำ ซึ่งสอดคล้องกันกับการกระจายตัวและแนวร่วมการรักษายอดของระดับภูมิภาค`;
 
       const topCustNames = topCustArr.slice(0,3).map(c=>c.name).join(', หรือ ');
       para3 = `ในส่วนของพื้นที่ยุทธศาสตร์ ข้อมูลแสดงผลให้เห็นเด่นชัดว่า "${topProv ? topProv.name : 'พื้นที่หลัก'}" เป็นอาณาเขตที่มีเสถียรภาพและบริหารรายได้ให้ตกตะกอนได้สูงที่สุด โดยมีมูลค่านำโด่งถึง ${topProv?.rev.toLocaleString('th-TH',{maximumFractionDigits:0})} บาท ซึ่งความสำเร็จระดับพื้นที่นี้ สัมพันธ์โดยตรงกับกิจกรรมทางธุรกิจจากลูกค้าองค์กรรายใหญ่ (Key Accounts) ที่เป็นเส้นเลือดฝอยหล่อเลี้ยงภูมิภาคนี้ ยกตัวอย่างเช่น ${topCustNames ? topCustNames : 'ลูกค้ารายย่อยทั่วไป'} ภูมิภาคและสาขาเหล่านี้ควรได้รับการพิจารณาเพื่มทรัพยากรช่วยเหลือและรักษาสัมพันธ์อย่างเนื่องต่อไป`;
@@ -175,7 +174,7 @@ const FullReport = ({ data }) => {
     return { 
       summary: { totalRev, totalVol, avgRev },
       provData: provArr,
-      customerTypeData: ctArr,
+      provPieData: provPieData,
       membershipData: memArr,
       monthlyTrend: trendArr,
       topCustomers: topCustArr,
@@ -332,25 +331,25 @@ const FullReport = ({ data }) => {
 
             {/* Paragraph 2 */}
             <div className="mb-10 text-justify">
-               <h2 className="text-lg font-bold mb-3 border-l-4 border-gray-900 pl-3">ส่วนที่ 2: โครงสร้างและการกระจายตัวของกลุ่มลูกค้า (Customer Segments)</h2>
+               <h2 className="text-lg font-bold mb-3 border-l-4 border-gray-900 pl-3">ส่วนที่ 2: การกระจายตัวของพื้นที่ขายและระบบสมาชิก (Geographic & Membership)</h2>
                <p className="indent-10 text-[15px] mb-8">{narratives.p2}</p>
 
                {/* Figure 2: Pies */}
                <div className="my-6 flex flex-col md:flex-row justify-center items-center gap-12" style={{ pageBreakInside: 'avoid' }}>
                   <div className="w-full md:w-1/2 flex flex-col items-center">
-                     <p className="text-center font-bold text-[13px] mb-2 text-gray-700">ภาพประกอบที่ 2.1: สัดส่วนประเภทลูกค้า</p>
+                     <p className="text-center font-bold text-[13px] mb-2 text-gray-700">ภาพประกอบที่ 2.1: สัดส่วนรายได้แยกตามพื้นที่ (จังหวัด)</p>
                      <div className="h-48 w-full max-w-[200px]">
                         <ResponsiveContainer>
                            <PieChart>
-                              <Pie data={customerTypeData} cx="50%" cy="50%" innerRadius={0} outerRadius={70} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
-                                 {customerTypeData.map((entry, index) => <Cell key={`c-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                              <Pie data={provPieData} cx="50%" cy="50%" innerRadius={0} outerRadius={70} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
+                                 {provPieData.map((entry, index) => <Cell key={`c-${index}`} fill={COLORS[index % COLORS.length]} />)}
                               </Pie>
                               <Tooltip formatter={(val) => formatCurrency(val)} />
                            </PieChart>
                         </ResponsiveContainer>
                      </div>
                      <div className="w-full max-w-[250px] mt-4 text-xs space-y-1">
-                        {customerTypeData.slice(0, 4).map((m, i) => (
+                        {provPieData.slice(0, 4).map((m, i) => (
                            <div key={i} className="flex justify-between border-b border-gray-100 pb-1">
                               <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}}></div>{m.name}</span>
                               <span className="font-bold">{((m.value / summary.totalRev) * 100).toFixed(1)}%</span>

@@ -21,21 +21,27 @@ const FullReport = ({ data }) => {
   const [filterYear, setFilterYear] = useState([]);
   const [filterMonth, setFilterMonth] = useState([]);
   const [filterProv, setFilterProv] = useState([]);
+  const [filterBranch, setFilterBranch] = useState([]);
 
   // Extract base options
-  const { allYears, allMonths, allProvinces } = useMemo(() => {
+  const { allYears, allMonths, allProvinces, allBranches } = useMemo(() => {
     const ySet = new Set();
     const mSet = new Set();
     const pSet = new Set();
+    const bSet = new Set();
     data.forEach(r => {
       if (r['ปี'] || r.year) ySet.add(String(r['ปี'] || r.year || '2026'));
       if (r['เดือน'] || r.month) mSet.add(r['เดือน'] || r.month);
       if (r['จังหวัด']) pSet.add(r['จังหวัด']);
+      
+      const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+      if (b) bSet.add(b);
     });
     return {
       allYears: ['All', ...Array.from(ySet).sort((a,b) => parseInt(b) - parseInt(a))],
       allMonths: ['All', ...Array.from(mSet).sort((a,b) => (mToNum[a] || 0) - (mToNum[b] || 0))],
-      allProvinces: ['All', ...Array.from(pSet).sort()]
+      allProvinces: ['All', ...Array.from(pSet).sort()],
+      allBranches: ['All', ...Array.from(bSet).sort()]
     };
   }, [data]);
 
@@ -63,9 +69,12 @@ const FullReport = ({ data }) => {
       const m = r['เดือน'] || r.month;
       if (filterMonth.length > 0 && !filterMonth.includes(m)) return false;
       if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+      
+      const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+      if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
       return true;
     });
-  }, [data, filterYear, filterMonth, filterProv]);
+  }, [data, filterYear, filterMonth, filterProv, filterBranch]);
 
   // Trend Filtered Data (Ignores Month Limit logically inside useMemo)
   const filteredDataTrend = useMemo(() => {
@@ -73,9 +82,12 @@ const FullReport = ({ data }) => {
       const y = String(r['ปี'] || r.year || '2026');
       if (filterYear.length > 0 && !filterYear.includes(y)) return false;
       if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
+      
+      const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
+      if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
       return true; 
     });
-  }, [data, filterYear, filterProv]);
+  }, [data, filterYear, filterProv, filterBranch]);
 
   // Calculate Insights and Formulate Narrative Paragraphs
   const { summary, provData, geoPieData, geoTitle, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
@@ -295,8 +307,9 @@ const FullReport = ({ data }) => {
           <MultiSelectDropdown label="Year" options={allYears} selectedValues={filterYear} onChange={setFilterYear} width="w-28" />
           <MultiSelectDropdown label="Month" options={allMonths} selectedValues={filterMonth} onChange={setFilterMonth} width="w-32" />
           <MultiSelectDropdown label="Province" options={allProvinces} selectedValues={filterProv} onChange={setFilterProv} width="w-48" />
+          <MultiSelectDropdown label="Branch" options={allBranches} selectedValues={filterBranch} onChange={setFilterBranch} width="w-48" />
           <button 
-             onClick={() => { setFilterYear([]); setFilterMonth([]); setFilterProv([]); }} 
+             onClick={() => { setFilterYear([]); setFilterMonth([]); setFilterProv([]); setFilterBranch([]); }} 
              className="text-[11px] bg-gray-100 border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-200 h-[32px] font-bold mt-auto mb-[2px] leading-none">
              Reset Data
           </button>
@@ -319,7 +332,7 @@ const FullReport = ({ data }) => {
                <div className="flex justify-center items-center gap-6 text-sm mt-4 border-y border-gray-200 py-3 mx-auto w-max px-8 rounded-full bg-gray-50/50">
                   <p><span className="text-gray-500 font-medium mr-2">รอบเวลา (Period):</span><span className="font-bold text-gray-900">{filterMonth.length > 0 ? filterMonth.join(', ') : 'ตลอดปี'} {filterYear.length > 0 ? filterYear.join(', ') : ''}</span></p>
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
-                  <p><span className="text-gray-500 font-medium mr-2">พื้นที่ (Region):</span><span className="font-bold text-gray-900">{filterProv.length > 0 ? filterProv.join(', ') : 'ภาพรวมทั่วประเทศ'}</span></p>
+                  <p><span className="text-gray-500 font-medium mr-2">พื้นที่ (Region):</span><span className="font-bold text-gray-900">{filterProv.length > 0 ? filterProv.join(', ') : filterBranch.length > 0 ? filterBranch.join(', ') : 'ทุกจังหวัด'}</span></p>
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
                   <p><span className="text-gray-500 font-medium mr-2">วันที่ออก (Date):</span><span className="font-bold text-gray-900">{new Date().toLocaleDateString('th-TH')}</span></p>
                </div>
@@ -442,21 +455,32 @@ const FullReport = ({ data }) => {
                      <table className="w-full text-left border-collapse border border-gray-400">
                         <thead className="bg-gray-100">
                            <tr className="border-b border-gray-400">
-                              <th className="py-2 px-3 border-r border-gray-300">จังหวัด</th>
-                              <th className="py-2 px-3 border-r border-gray-300 text-right">จำนวนสาขา</th>
-                              <th className="py-2 px-3 border-r border-gray-300 text-right">ปริมาณจัดส่ง (ชิ้น)</th>
+                              <th className="py-2 px-3 border-r border-gray-300">{isBranchView ? 'ที่ทำการ (สาขา)' : 'จังหวัด'}</th>
+                              <th className="py-2 px-3 border-r border-gray-300 text-right">{isBranchView ? 'ปริมาณงานสาขา (ชิ้น)' : 'จำนวนสาขา'}</th>
+                              <th className="py-2 px-3 border-r border-gray-300 text-right">{isBranchView ? 'รายได้เฉลี่ย/ชิ้น' : 'ปริมาณจัดส่ง (ชิ้น)'}</th>
                               <th className="py-2 px-3 text-right">รายได้สะสม (บาท)</th>
                            </tr>
                         </thead>
                         <tbody>
-                           {provData.slice(0, 10).map((prov, i) => (
-                              <tr key={i} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
-                                 <td className="py-2 px-3 border-r border-gray-300 font-semibold">{prov.name}</td>
-                                 <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{prov.branches.length}</td>
-                                 <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatNumber(prov.vol)}</td>
-                                 <td className="py-2 px-3 text-right font-bold text-indigo-900">{formatCurrency(prov.rev)}</td>
-                              </tr>
-                           ))}
+                           {!isBranchView ? (
+                              provData.slice(0, 10).map((prov, i) => (
+                                 <tr key={`p-${i}`} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
+                                    <td className="py-2 px-3 border-r border-gray-300 font-semibold">{prov.name}</td>
+                                    <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{prov.branches.length}</td>
+                                    <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatNumber(prov.vol)}</td>
+                                    <td className="py-2 px-3 text-right font-bold text-indigo-900">{formatCurrency(prov.rev)}</td>
+                                 </tr>
+                              ))
+                           ) : (
+                              provData[0]?.branches.slice(0, 15).map((b, i) => (
+                                 <tr key={`b-${i}`} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
+                                    <td className="py-2 px-3 border-r border-gray-300 font-semibold">{b.name}</td>
+                                    <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatNumber(b.vol)}</td>
+                                    <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatCurrency(b.vol ? b.rev/b.vol : 0)}</td>
+                                    <td className="py-2 px-3 text-right font-bold text-indigo-900">{formatCurrency(b.rev)}</td>
+                                 </tr>
+                              ))
+                           )}
                         </tbody>
                      </table>
                   </div>

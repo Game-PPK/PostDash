@@ -5,8 +5,7 @@ import {
 } from 'recharts';
 import { FileText, Calendar } from 'lucide-react';
 
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 
 const COLORS = ['#1f2937', '#4b5563', '#6b7280', '#9ca3af', '#d1d5db', '#4f46e5', '#818cf8', '#2dd4bf'];
@@ -239,42 +238,44 @@ const FullReport = ({ data }) => {
 
 
   // Exports
-  const handleExportPDF = async () => {
-    if (reportRef.current === null) return;
-    try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        windowWidth: reportRef.current.scrollWidth,
-        windowHeight: reportRef.current.scrollHeight,
-      });
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = pageW;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      let heightLeft = imgH;
-      let yPos = 0;
-      pdf.addImage(imgData, 'JPEG', 0, yPos, imgW, imgH);
-      heightLeft -= pageH;
-      while (heightLeft > 0) {
-        yPos -= pageH;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, yPos, imgW, imgH);
-        heightLeft -= pageH;
-      }
-      const ts = new Date();
-      const filename = `InsightReport_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}${String(ts.getDate()).padStart(2,'0')}.pdf`;
-      pdf.save(filename);
-    } catch (e) {
-      console.error('PDF Export Error:', e);
-      alert('เกิดข้อผิดพลาดในการสร้าง PDF กรุณาลองใหม่อีกครั้ง');
+  const handleExportPDF = () => {
+    if (!reportRef.current) return;
+    const content = reportRef.current.innerHTML;
+    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    if (!printWindow) {
+      alert('บราวเซอร์บล็อก Pop-up กรุณาสมัครเปิดใช้งาน Pop-up สำหรับเว็บไซต์นี้แล้วลองใหม่');
+      return;
     }
+    const styles = Array.from(document.styleSheets)
+      .map(s => { try { return Array.from(s.cssRules).map(r => r.cssText).join(''); } catch { return ''; } })
+      .join('');
+    printWindow.document.write(`
+      <!DOCTYPE html><html lang="th">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Insight Report</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+          ${styles}
+          * { box-sizing: border-box; }
+          body { margin: 0; padding: 0; background: white; font-family: 'Sarabun', sans-serif; }
+          @page { size: A4; margin: 10mm; }
+          @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body><div class="p-10">${content}</div></body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 800);
+    };
   };
 
 

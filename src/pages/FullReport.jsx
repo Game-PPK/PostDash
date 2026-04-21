@@ -3,14 +3,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, ComposedChart, Line
 } from 'recharts';
-import { Download, FileSpreadsheet, FileText, MapPin, Briefcase, Award, TrendingUp, Calendar, Users, Activity, BarChart2 } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, Calendar } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import MultiSelectDropdown from '../components/MultiSelectDropdown';
 
-const COLORS = ['#4f46e5', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#ea580c', '#db2777', '#0d9488'];
+const COLORS = ['#1f2937', '#4b5563', '#6b7280', '#9ca3af', '#d1d5db', '#4f46e5', '#818cf8', '#2dd4bf'];
 
 const mToNum = {'มกราคม':1,'กุมภาพันธ์':2,'มีนาคม':3,'เมษายน':4,'พฤษภาคม':5,'มิถุนายน':6,'กรกฎาคม':7,'สิงหาคม':8,'กันยายน':9,'ตุลาคม':10,'พฤศจิกายน':11,'ธันวาคม':12};
 
@@ -73,12 +73,12 @@ const FullReport = ({ data }) => {
       const y = String(r['ปี'] || r.year || '2026');
       if (filterYear.length > 0 && !filterYear.includes(y)) return false;
       if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
-      return true; // Ignite Month Filter intentionally
+      return true; 
     });
   }, [data, filterYear, filterProv]);
 
-  // Calculate Insights
-  const { summary, provData, customerTypeData, membershipData, monthlyTrend, topCustomers, autoInsight } = useMemo(() => {
+  // Calculate Insights and Formulate Narrative Paragraphs
+  const { summary, provData, customerTypeData, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
     let totalRev = 0;
     let totalVol = 0;
     const pMap = {};
@@ -152,46 +152,42 @@ const FullReport = ({ data }) => {
     const topCustArr = Object.values(custMap).sort((a,b) => b.rev - a.rev).slice(0, 20);
     const trendArr = Object.values(monthMap).sort((a,b) => (mToNum[a.name] || 0) - (mToNum[b.name] || 0));
 
-    // Auto-Insight Text Generation
-    let insightStr = "ยังไม่มีข้อมูลเพียงพอสำหรับประมวลผลคำแนะนำเชิงบริหาร";
-    if (provArr.length > 0 && ctArr.length > 0) {
-      const topP = provArr[0];
-      const pct = totalRev > 0 ? ((topP.rev / totalRev) * 100).toFixed(1) : 0;
-      const topCT = ctArr[0].name;
-      const topCTPct = totalRev > 0 ? ((ctArr[0].value / totalRev) * 100).toFixed(1) : 0;
+    // Automated Narrative Engine
+    const avgRev = totalVol ? totalRev / totalVol : 0;
+    const topProv = provArr.length > 0 ? provArr[0] : null;
+    const topMonth = [...trendArr].sort((a,b) => b.revenue - a.revenue)[0];
+    const topCT = ctArr.length > 0 ? ctArr[0] : null;
+
+    let para1 = "ระบบไม่สามารถประมวลผลคำบรรยายได้เนื่องจากไม่มีข้อมูลในขอบเขตที่เลือก";
+    let para2 = ""; let para3 = "";
+
+    if (totalRev > 0) {
+      const pTopCTRev = topCT ? ((topCT.value / totalRev)*100).toFixed(1) : 0;
       
-      insightStr = `จากข้อมูลที่เลือก พื้นที่ที่มีผลการดำเนินงานโดดเด่นทำกำไรสูงสุดคือ "${topP.name}" ซึ่งครอบครองสัดส่วนถึง ${pct}% ของรายได้รวมทั้งหมดในขอบเขตรายงานนี้ กลุ่มเป้าหมายหรือประเภทของลูกค้าที่เป็นรายได้หลักคือกลุ่ม "${topCT}" คิดเป็น ${topCTPct}% ของทั้งหมด โดยมีรายได้ต่อชิ้นงานเฉลี่ยในองค์รวมอยู่ที่ ${(totalVol ? totalRev/totalVol : 0).toLocaleString('th-TH', {maximumFractionDigits:1})} บาท`;
+      para1 = `ในรอบการดำเนินงานประเมินผลนี้ ปรากฏรายได้รวมทั้งสิ้น ${totalRev.toLocaleString('th-TH', {maximumFractionDigits:0})} บาท จากปริมาณชิ้นงานที่ให้บริการรวมทั้งหมด ${totalVol.toLocaleString('th-TH')} ชิ้น โดยค่าเฉลี่ยรายได้ต่อชิ้นงานอยู่ที่ ${avgRev.toLocaleString('th-TH',{maximumFractionDigits:1})} บาทต่อชิ้น เมื่อเปรียบเทียบในแง่ของช่วงเวลาอย่างต่อเนื่อง (Annual Seasonality) พบว่าข้อมูลรายได้มีทิศทางเปลี่ยนแปลงตามช่วงเวลา โดย${topMonth ? `เดือนที่มีผลประกอบการหนาแน่นที่สุดคือ "เดือน${topMonth.name}" ซึ่งมีรายได้สูงถึง ${topMonth.revenue.toLocaleString('th-TH',{maximumFractionDigits:0})} บาท สะท้อนให้เห็นจุดสูงสุด (Peak Season) ของกรอบระยะเวลาดังกล่าว` : 'ข้อมูลการกระจายรายเดือนบ่งบอกถึงความทรงตัวของรายได้'}`;
+
+      para2 = `เจาะลึกมิติการ phân khúc ลูกค้า (Customer Segmentation) พบว่ากลุ่มลูกค้ารูปแบบ "${topCT ? topCT.name : 'ทั่วไป'}" เป็นปัจจัยหลักสำคัญที่ขับเคลื่อนโครงสร้างองค์กร คิดเป็นสัดส่วนรายได้กว่า ${pTopCTRev}% ของเม็ดเงินรวม ในขณะเดียวกัน ระดับความภักดีของลูกค้าที่จัดเก็บผ่านแผนระบบ Membership ถือว่าเป็นตัวเสริมความมั่นคงให้กับรายได้ประจำ ซึ่งสอดคล้องกันกับการกระจายตัวของประเภทผู้ใช้งานในภาพรวม`;
+
+      const topCustNames = topCustArr.slice(0,3).map(c=>c.name).join(', หรือ ');
+      para3 = `ในส่วนของพื้นที่ยุทธศาสตร์ ข้อมูลแสดงผลให้เห็นเด่นชัดว่า "${topProv ? topProv.name : 'พื้นที่หลัก'}" เป็นอาณาเขตที่มีเสถียรภาพและบริหารรายได้ให้ตกตะกอนได้สูงที่สุด โดยมีมูลค่านำโด่งถึง ${topProv?.rev.toLocaleString('th-TH',{maximumFractionDigits:0})} บาท ซึ่งความสำเร็จระดับพื้นที่นี้ สัมพันธ์โดยตรงกับกิจกรรมทางธุรกิจจากลูกค้าองค์กรรายใหญ่ (Key Accounts) ที่เป็นเส้นเลือดฝอยหล่อเลี้ยงภูมิภาคนี้ ยกตัวอย่างเช่น ${topCustNames ? topCustNames : 'ลูกค้ารายย่อยทั่วไป'} ภูมิภาคและสาขาเหล่านี้ควรได้รับการพิจารณาเพื่มทรัพยากรช่วยเหลือและรักษาสัมพันธ์อย่างเนื่องต่อไป`;
     }
 
     return { 
-      summary: { totalRev, totalVol, avgRev: totalVol ? totalRev / totalVol : 0 },
+      summary: { totalRev, totalVol, avgRev },
       provData: provArr,
       customerTypeData: ctArr,
       membershipData: memArr,
       monthlyTrend: trendArr,
       topCustomers: topCustArr,
-      autoInsight: insightStr
+      narratives: { p1: para1, p2: para2, p3: para3 }
     };
   }, [filteredData, filteredDataTrend]);
-
-  const topProvince = provData.length > 0 ? provData[0] : null;
 
   // Formatters
   const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(val || 0);
   const formatNumber = (val) => new Intl.NumberFormat('th-TH').format(val || 0);
 
   // Exports
-  const handleExportImage = () => {
-    if (reportRef.current === null) return;
-    htmlToImage.toPng(reportRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = `Management-Report-${new Date().getTime()}.png`;
-        link.href = dataUrl;
-        link.click();
-      }).catch(console.error);
-  };
-
   const handleExportExcel = () => {
     const wsData = [];
     provData.forEach(p => {
@@ -211,50 +207,45 @@ const FullReport = ({ data }) => {
     const ws = XLSX.utils.json_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Branch Detailed Report");
-    XLSX.writeFile(wb, `Management_Report_${new Date().getTime()}.xlsx`);
+    XLSX.writeFile(wb, `Insight_Report_${new Date().getTime()}.xlsx`);
   };
 
   const handleExportPDF = async () => {
     if (reportRef.current === null) return;
     try {
-      // Temporarily add a class for PDF layout rendering if needed
       reportRef.current.classList.add('px-8', 'py-8');
       const canvas = await html2canvas(reportRef.current, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
       reportRef.current.classList.remove('px-8', 'py-8');
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-         let heightLeft = pdfHeight;
-         let position = 0;
-         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-         heightLeft -= pdf.internal.pageSize.getHeight();
-         
-         while (heightLeft >= 0) {
-           position = heightLeft - pdfHeight;
-           pdf.addPage();
-           pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-           heightLeft -= pdf.internal.pageSize.getHeight();
-         }
-      } else {
-         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      let heightLeft = pdfHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pdf.internal.pageSize.getHeight();
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
       }
-      pdf.save(`Management_Report_${new Date().getTime()}.pdf`);
+      pdf.save(`Insight_Report_${new Date().getTime()}.pdf`);
     } catch (e) {
       console.error("PDF Export Error", e);
     }
   };
 
   const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
      const x = cx + radius * Math.cos(-midAngle * RADIAN);
      const y = cy + radius * Math.sin(-midAngle * RADIAN);
      return percent > 0.05 ? (
-       <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={11} fontWeight="bold">
+       <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12} fontWeight="bold">
          {`${(percent * 100).toFixed(0)}%`}
        </text>
      ) : null;
@@ -263,24 +254,21 @@ const FullReport = ({ data }) => {
   return (
     <div className="space-y-6 animate-fade-in pb-12 pt-4">
       
-      {/* Tools & Filters (Not exported in the PDF context visually inside A4 container but acts as controller) */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 relative z-30 mx-auto max-w-[1240px]">
+      {/* Configuration Strip */}
+      <div className="bg-white p-6 shadow-sm border border-gray-200 relative z-30 mx-auto max-w-[1000px]">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 pb-4 border-b border-gray-100">
           <div>
             <h2 className="text-xl font-bold text-gray-800 flex items-center">
               <Calendar className="mr-2 text-indigo-600" size={24} />
-              Report Configuration
+              Customize Report Document
             </h2>
           </div>
           <div className="flex gap-2">
-             <button onClick={handleExportImage} className="flex items-center text-sm font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-4 py-2 rounded-xl transition-colors">
-                <Download size={16} className="mr-2 text-indigo-600" /> Export PNG
+             <button onClick={handleExportPDF} className="flex items-center text-sm font-semibold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm px-4 py-2 transition-colors">
+                <FileText size={16} className="mr-2" /> Download Report (PDF)
              </button>
-             <button onClick={handleExportPDF} className="flex items-center text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm border border-transparent px-4 py-2 rounded-xl transition-colors">
-                <FileText size={16} className="mr-2" /> Export Document (PDF)
-             </button>
-             <button onClick={handleExportExcel} className="flex items-center text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm border border-transparent px-4 py-2 rounded-xl transition-colors">
-                <FileSpreadsheet size={16} className="mr-2" /> Export Excel
+             <button onClick={handleExportExcel} className="flex items-center text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 shadow-sm border border-indigo-200 px-4 py-2 transition-colors">
+                <FileSpreadsheet size={16} className="mr-2" /> Download Data (Excel)
              </button>
           </div>
         </div>
@@ -291,227 +279,174 @@ const FullReport = ({ data }) => {
           <MultiSelectDropdown label="Province" options={allProvinces} selectedValues={filterProv} onChange={setFilterProv} width="w-48" />
           <button 
              onClick={() => { setFilterYear([]); setFilterMonth([]); setFilterProv([]); }} 
-             className="text-[11px] bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg text-gray-600 hover:bg-gray-200 h-[32px] font-bold mt-auto mb-[2px] leading-none">
-             Reset Filters
+             className="text-[11px] bg-gray-100 border border-gray-200 px-3 py-1.5 text-gray-600 hover:bg-gray-200 h-[32px] font-bold mt-auto mb-[2px] leading-none">
+             Reset Data
           </button>
         </div>
       </div>
 
-      {/* DOCUMENT A4 RENDER CONTAINER */}
+      {/* PAPER NARRATIVE REPORT CONTAINER */}
       <div 
         ref={reportRef}
-        className="max-w-[1240px] mx-auto bg-white shadow-xl border border-gray-300 min-h-[1400px] text-gray-800"
+        className="max-w-[1000px] mx-auto bg-white border border-gray-300 min-h-[1400px]"
+        style={{ fontFamily: "'Sarabun', 'Taviraj', serif" }} // Inject formal-looking font hints dynamically
       >
-         {/* Internal Doc Padding Wrapper */}
-         <div className="p-10 md:p-14 lg:p-16 space-y-10">
-
-            {/* Document Header */}
-            <div className="border-b-4 border-indigo-900 pb-8 flex justify-between items-end">
-               <div>
-                  <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tight leading-tight">Management Report</h1>
-                  <p className="text-lg text-gray-500 font-medium mt-1">รายงานผลการดำเนินงาน และ ข้อมูลระดับบริหาร</p>
-               </div>
-               <div className="text-right">
-                  <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Generated Period</p>
-                  <p className="text-xl font-bold text-gray-800">
-                     {filterMonth.length > 0 ? filterMonth.join(', ') : 'All Months'} {filterYear.length > 0 ? filterYear.join(', ') : 'All Years'}
-                  </p>
-               </div>
+         <div className="p-12 md:p-16 lg:p-20 text-gray-900 leading-relaxed">
+            
+            {/* Header Document */}
+            <div className="text-center mb-12">
+               <h1 className="text-2xl lg:text-3xl font-bold uppercase tracking-wide border-b-2 border-gray-900 pb-6 mb-6 inline-block w-full">
+                  รายงานวิเคราะห์เชิงลึกและทิศทางธุรกิจ (Insight Report)
+               </h1>
+               <table className="mx-auto text-left text-sm mt-4">
+                 <tbody>
+                    <tr><th className="pr-4 py-1 text-gray-500 font-medium">รอบเวลาข้อมูล (Period):</th><td className="font-bold">{filterMonth.length > 0 ? filterMonth.join(', ') : 'ทุกระยะ/ตลอดปี'} {filterYear.length > 0 ? filterYear.join(', ') : ''}</td></tr>
+                    <tr><th className="pr-4 py-1 text-gray-500 font-medium">ขอบเขตพื้นที่ (Region):</th><td className="font-bold">{filterProv.length > 0 ? filterProv.join(', ') : 'ภาพรวมทั่วประเทศ'}</td></tr>
+                    <tr><th className="pr-4 py-1 text-gray-500 font-medium">วันออกเอกสาร (Date):</th><td className="font-bold">{new Date().toLocaleDateString('th-TH')}</td></tr>
+                 </tbody>
+               </table>
             </div>
 
-            {/* Part 1: Management Summary Text */}
-            <div className="bg-gray-50/80 p-8 rounded border-l-4 border-indigo-600">
-               <h3 className="text-lg font-bold text-indigo-900 flex items-center mb-3">
-                  <Activity size={20} className="mr-2" /> Management Summary (บทสรุปผู้บริหาร)
-               </h3>
-               <p className="text-gray-700 leading-relaxed font-medium">
-                  "{autoInsight}"
-               </p>
-               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-gray-200">
-                  <div>
-                     <p className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-1">Total Valid Revenue</p>
-                     <p className="text-3xl font-black text-gray-900">{formatCurrency(summary.totalRev)}</p>
-                  </div>
-                  <div>
-                     <p className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-1">Total Volume Handled</p>
-                     <p className="text-3xl font-black text-gray-900">{formatNumber(summary.totalVol)} pcs</p>
-                  </div>
-                  <div>
-                     <p className="text-xs font-bold text-gray-400 tracking-wider uppercase mb-1">Average Revenue/Piece</p>
-                     <p className="text-3xl font-black text-indigo-700">{formatCurrency(summary.avgRev)}</p>
-                  </div>
-               </div>
-            </div>
-
-            {/* Part 2: Year Trends & Structure Analysis */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {/* Paragraph 1 */}
+            <div className="mb-10 text-justify">
+               <h2 className="text-lg font-bold mb-3 border-l-4 border-gray-900 pl-3">ส่วนที่ 1: ภาพรวมผลประกอบการแบบเจาะลึก (Overall Performance)</h2>
+               <p className="indent-10 text-[15px] mb-8">{narratives.p1}</p>
                
-               {/* Line Chart: Monthly Trend (Whole Year Context) */}
-               <div>
-                  <h3 className="text-base font-bold text-gray-800 mb-6 uppercase tracking-wider border-b border-gray-200 pb-2">
-                     Seasonality & Revenue Trends
-                  </h3>
-                  <div className="h-64 w-full">
+               {/* Figure 1: Monthly Trend */}
+               <div className="my-6 border border-gray-100 bg-gray-50/30 p-6 rounded" style={{ pageBreakInside: 'avoid' }}>
+                  <p className="text-center font-bold text-sm mb-4">ภาพประกอบที่ 1: กราฟรายได้และชิ้นงานตลอดทั้งปี</p>
+                  <div className="h-64 w-full max-w-2xl mx-auto">
                      <ResponsiveContainer>
-                        <ComposedChart data={monthlyTrend} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                        <ComposedChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                           <YAxis yAxisId="left" tickFormatter={val => `${(val/1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{fill: '#6b7280', fontSize: 12}} />
-                           <Tooltip formatter={(val) => formatCurrency(val)} contentStyle={{ borderRadius: '8px' }} />
-                           <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} dot={{r: 4, strokeWidth: 2}} activeDot={{r: 6}} name="Revenue" />
-                           <Bar yAxisId="left" dataKey="volume" fill="#e5e7eb" barSize={20} name="Volume" />
+                           <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#4b5563', fontSize: 11}} />
+                           <YAxis yAxisId="left" tickFormatter={val => `${(val/1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{fill: '#4b5563', fontSize: 11}} />
+                           <Tooltip formatter={(val) => formatCurrency(val)} contentStyle={{ borderRadius: '0px' }} />
+                           <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#1f2937" strokeWidth={2} dot={{r: 4}} name="รายได้ (บ.)" />
+                           <Bar yAxisId="left" dataKey="volume" fill="#d1d5db" barSize={16} name="ปริมาณงาน (ชิ้น)" />
                         </ComposedChart>
                      </ResponsiveContainer>
                   </div>
-                  <p className="text-[10px] text-gray-400 italic text-center mt-2">* กราฟแสดงแนวโน้มรวมตลอดทั้งปี ตามตัวกรองพื้นที่และปี (ไม่อิงตัวกรองเดือน)</p>
                </div>
-
-               {/* Pie Charts : Demographic / Membership */}
-               <div className="flex flex-col gap-6">
-                  <div>
-                     <h3 className="text-base font-bold text-gray-800 mb-2 uppercase tracking-wider border-b border-gray-200 pb-2">
-                        Customer Type Distribution
-                     </h3>
-                     <div className="h-40 w-full flex items-center">
-                        <ResponsiveContainer width="50%" height="100%">
-                           <PieChart>
-                              <Pie data={customerTypeData} cx="50%" cy="50%" innerRadius={30} outerRadius={60} paddingAngle={2} dataKey="value" labelLine={false}>
-                                 {customerTypeData.map((entry, index) => (
-                                    <Cell key={`cell-ct-${index}`} fill={COLORS[index % COLORS.length]} />
-                                 ))}
-                              </Pie>
-                              <Tooltip formatter={(val) => formatCurrency(val)} />
-                           </PieChart>
-                        </ResponsiveContainer>
-                        <div className="w-[50%] space-y-2">
-                           {customerTypeData.slice(0, 4).map((m, i) => (
-                              <div key={i} className="flex justify-between items-center text-sm">
-                                 <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
-                                    <p className="font-medium text-gray-700 truncate">{m.name}</p>
-                                 </div>
-                                 <p className="font-bold text-gray-900 ml-2">{((m.value / summary.totalRev) * 100).toFixed(1)}%</p>
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
-
-                  <div>
-                     <h3 className="text-base font-bold text-gray-800 mb-2 uppercase tracking-wider border-b border-gray-200 pb-2">
-                        Membership Program Share
-                     </h3>
-                     <div className="h-40 w-full flex items-center">
-                        <ResponsiveContainer width="50%" height="100%">
-                           <PieChart>
-                              <Pie data={membershipData} cx="50%" cy="50%" innerRadius={30} outerRadius={60} paddingAngle={2} dataKey="value" labelLine={false}>
-                                 {membershipData.map((entry, index) => (
-                                    <Cell key={`cell-mem-${index}`} fill={COLORS[(index + 3) % COLORS.length]} />
-                                 ))}
-                              </Pie>
-                              <Tooltip formatter={(val) => formatCurrency(val)} />
-                           </PieChart>
-                        </ResponsiveContainer>
-                        <div className="w-[50%] space-y-2">
-                           {membershipData.slice(0, 4).map((m, i) => (
-                              <div key={i} className="flex justify-between items-center text-sm">
-                                 <div className="flex items-center gap-1.5 min-w-0">
-                                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[(i+3) % COLORS.length] }}></div>
-                                    <p className="font-medium text-gray-700 truncate">{m.name}</p>
-                                 </div>
-                                 <p className="font-bold text-gray-900 ml-2">{((m.value / summary.totalRev) * 100).toFixed(1)}%</p>
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
-               </div>
-
             </div>
 
-            {/* Part 3: Top Entities / Branch Data */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-               
-               {/* Left: Top Customers Ranking */}
-               <div className="lg:col-span-4">
-                  <h3 className="text-base font-bold text-gray-800 mb-4 uppercase tracking-wider border-b border-gray-200 pb-2 flex items-center" style={{ pageBreakInside: 'avoid'}}>
-                     Top 20 Key Customers
-                  </h3>
-                  <div className="space-y-0 border-l-2 border-indigo-100 pl-4">
-                     {topCustomers.length > 0 ? topCustomers.map((c, i) => (
-                        <div key={i} className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-0" style={{ pageBreakInside: 'avoid'}}>
-                           <div className="min-w-0 pr-4">
-                              <p className="text-sm font-bold text-gray-800 truncate" title={c.name}>{i+1}. {c.name}</p>
-                              <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5">{c.mainBranch}</p>
+            {/* Paragraph 2 */}
+            <div className="mb-10 text-justify">
+               <h2 className="text-lg font-bold mb-3 border-l-4 border-gray-900 pl-3">ส่วนที่ 2: โครงสร้างและการกระจายตัวของกลุ่มลูกค้า (Customer Segments)</h2>
+               <p className="indent-10 text-[15px] mb-8">{narratives.p2}</p>
+
+               {/* Figure 2: Pies */}
+               <div className="my-6 flex flex-col md:flex-row justify-center items-center gap-12" style={{ pageBreakInside: 'avoid' }}>
+                  <div className="w-full md:w-1/2 flex flex-col items-center">
+                     <p className="text-center font-bold text-[13px] mb-2 text-gray-700">ภาพประกอบที่ 2.1: สัดส่วนประเภทลูกค้า</p>
+                     <div className="h-48 w-full max-w-[200px]">
+                        <ResponsiveContainer>
+                           <PieChart>
+                              <Pie data={customerTypeData} cx="50%" cy="50%" innerRadius={0} outerRadius={70} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
+                                 {customerTypeData.map((entry, index) => <Cell key={`c-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                              </Pie>
+                              <Tooltip formatter={(val) => formatCurrency(val)} />
+                           </PieChart>
+                        </ResponsiveContainer>
+                     </div>
+                     <div className="w-full max-w-[250px] mt-4 text-xs space-y-1">
+                        {customerTypeData.slice(0, 4).map((m, i) => (
+                           <div key={i} className="flex justify-between border-b border-gray-100 pb-1">
+                              <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}}></div>{m.name}</span>
+                              <span className="font-bold">{((m.value / summary.totalRev) * 100).toFixed(1)}%</span>
                            </div>
-                           <div className="text-right shrink-0">
-                              <p className="text-sm font-black text-indigo-700">{formatCurrency(c.rev)}</p>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div className="w-full md:w-1/2 flex flex-col items-center">
+                     <p className="text-center font-bold text-[13px] mb-2 text-gray-700">ภาพประกอบที่ 2.2: สัดส่วนระบบ Membership</p>
+                     <div className="h-48 w-full max-w-[200px]">
+                        <ResponsiveContainer>
+                           <PieChart>
+                              <Pie data={membershipData} cx="50%" cy="50%" innerRadius={0} outerRadius={70} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
+                                 {membershipData.map((entry, index) => <Cell key={`m-${index}`} fill={COLORS[(index + 4) % COLORS.length]} />)}
+                              </Pie>
+                              <Tooltip formatter={(val) => formatCurrency(val)} />
+                           </PieChart>
+                        </ResponsiveContainer>
+                     </div>
+                     <div className="w-full max-w-[250px] mt-4 text-xs space-y-1">
+                        {membershipData.slice(0, 4).map((m, i) => (
+                           <div key={i} className="flex justify-between border-b border-gray-100 pb-1">
+                              <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[(i+4) % COLORS.length]}}></div>{m.name}</span>
+                              <span className="font-bold">{((m.value / summary.totalRev) * 100).toFixed(1)}%</span>
                            </div>
-                        </div>
-                     )) : (
-                        <p className="text-sm text-gray-400 py-4">No customer data retrieved.</p>
-                     )}
+                        ))}
+                     </div>
                   </div>
                </div>
+            </div>
 
-               {/* Right: Branch/Geographic Exact Data Table */}
-               <div className="lg:col-span-8">
-                  <h3 className="text-base font-bold text-gray-800 mb-4 uppercase tracking-wider border-b border-gray-200 pb-2">
-                     Detailed Location Performance (Province & Branch)
-                  </h3>
+            {/* Paragraph 3 */}
+            <div className="mb-10 text-justify">
+               <h2 className="text-lg font-bold mb-3 border-l-4 border-gray-900 pl-3">ส่วนที่ 3: ภูมิศาสตร์และลูกค้าสำคัญ (Strategic Locations & Key Accounts)</h2>
+               <p className="indent-10 text-[15px] mb-8">{narratives.p3}</p>
+               
+               {/* Figure 3: Tables */}
+               <div className="flex flex-col gap-10 mt-6 text-sm" style={{ pageBreakInside: 'avoid' }}>
+                  
+                  {/* Top 10 customer list formatted as a professional table */}
                   <div className="w-full">
-                     <table className="w-full text-left border-collapse">
-                        <thead>
-                           <tr className="text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-300">
-                              <th className="py-2.5 px-2">Province / Branch</th>
-                              <th className="py-2.5 px-2 text-right">Revenue</th>
-                              <th className="py-2.5 px-2 text-right">Volume</th>
-                              <th className="py-2.5 px-2 text-right">Rev/Pc</th>
+                     <p className="font-bold text-sm mb-2 text-gray-800">ตารางที่ 1: รายชื่อ 10 ลูกค้าสำคัญ (Top Key Accounts)</p>
+                     <table className="w-full text-left border-collapse border border-gray-400">
+                        <thead className="bg-gray-100">
+                           <tr className="border-b border-gray-400">
+                              <th className="py-2 px-3 border-r border-gray-300 w-12 text-center">ลำดับ</th>
+                              <th className="py-2 px-3 border-r border-gray-300">ชื่อลูกค้าบัญชี/องค์กร</th>
+                              <th className="py-2 px-3 border-r border-gray-300">สาขาหลักที่ใช้งาน</th>
+                              <th className="py-2 px-3 text-right">ยอดรายได้ (บาท)</th>
                            </tr>
                         </thead>
-                        <tbody className="text-sm text-gray-700">
-                           {provData.length > 0 ? provData.map((prov, i) => (
-                              <React.Fragment key={`prov-${i}`}>
-                                 <tr className="bg-gray-100 font-bold border-b border-gray-200" style={{ pageBreakInside: 'avoid' }}>
-                                    <td className="py-2.5 px-2 text-gray-900">
-                                       <span className="text-indigo-600 mr-2">▪</span> {prov.name}
-                                    </td>
-                                    <td className="py-2.5 px-2 text-right text-indigo-800">{formatCurrency(prov.rev)}</td>
-                                    <td className="py-2.5 px-2 text-right text-gray-700">{formatNumber(prov.vol)}</td>
-                                    <td className="py-2.5 px-2 text-right">{formatCurrency(prov.vol ? prov.rev/prov.vol : 0)}</td>
-                                 </tr>
-                                 {prov.branches.slice(0, 15).map((b, j) => (
-                                    <tr key={`branch-${i}-${j}`} className="border-b border-gray-100" style={{ pageBreakInside: 'avoid' }}>
-                                       <td className="py-2 px-2 pl-8 text-xs font-medium text-gray-600">{b.name}</td>
-                                       <td className="py-2 px-2 text-right text-xs font-semibold">{formatCurrency(b.rev)}</td>
-                                       <td className="py-2 px-2 text-right text-xs">{formatNumber(b.vol)}</td>
-                                       <td className="py-2 px-2 text-right text-xs text-gray-500">{formatCurrency(b.vol ? b.rev/b.vol : 0)}</td>
-                                    </tr>
-                                 ))}
-                                 {prov.branches.length > 15 && (
-                                    <tr className="border-b border-gray-100">
-                                       <td colSpan="4" className="py-1 px-2 pl-8 text-[10px] text-gray-400 italic">
-                                          ... and {prov.branches.length - 15} more smaller branches. (Export Excel for full list)
-                                       </td>
-                                    </tr>
-                                 )}
-                              </React.Fragment>
-                           )) : (
-                              <tr>
-                                 <td colSpan="4" className="py-12 text-center text-gray-400 font-medium">No valid breakdown data available.</td>
+                        <tbody>
+                           {topCustomers.slice(0, 10).map((c, i) => (
+                              <tr key={i} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
+                                 <td className="py-2 px-3 border-r border-gray-300 text-center font-bold text-gray-500">{i+1}</td>
+                                 <td className="py-2 px-3 border-r border-gray-300 font-semibold">{c.name}</td>
+                                 <td className="py-2 px-3 border-r border-gray-300 text-gray-600">{c.mainBranch}</td>
+                                 <td className="py-2 px-3 text-right font-bold text-indigo-900">{formatCurrency(c.rev)}</td>
                               </tr>
-                           )}
+                           ))}
                         </tbody>
                      </table>
                   </div>
-               </div>
 
+                  {/* Top Provinces details */}
+                  <div className="w-full" style={{ pageBreakBefore: 'auto' }}>
+                     <p className="font-bold text-sm mb-2 text-gray-800">ตารางที่ 2: รหัสน้ำหนักเชิงภูมิศาสตร์ (Geographic Operations)</p>
+                     <table className="w-full text-left border-collapse border border-gray-400">
+                        <thead className="bg-gray-100">
+                           <tr className="border-b border-gray-400">
+                              <th className="py-2 px-3 border-r border-gray-300">จังหวัด</th>
+                              <th className="py-2 px-3 border-r border-gray-300 text-right">จำนวนสาขา</th>
+                              <th className="py-2 px-3 border-r border-gray-300 text-right">ปริมาณจัดส่ง (ชิ้น)</th>
+                              <th className="py-2 px-3 text-right">รายได้สะสม (บาท)</th>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           {provData.slice(0, 10).map((prov, i) => (
+                              <tr key={i} className="border-b border-gray-300 text-[13px] hover:bg-gray-50">
+                                 <td className="py-2 px-3 border-r border-gray-300 font-semibold">{prov.name}</td>
+                                 <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{prov.branches.length}</td>
+                                 <td className="py-2 px-3 border-r border-gray-300 text-right text-gray-600">{formatNumber(prov.vol)}</td>
+                                 <td className="py-2 px-3 text-right font-bold text-indigo-900">{formatCurrency(prov.rev)}</td>
+                              </tr>
+                           ))}
+                        </tbody>
+                     </table>
+                  </div>
+
+               </div>
             </div>
 
-            {/* Document Footer */}
-            <div className="pt-10 border-t border-gray-200 flex justify-between items-center text-xs text-gray-400 font-medium mt-16">
-               <p>Generated by PostDash Reporting Analytics • Internal Use Only</p>
-               <p>Printed on: {new Date().toLocaleDateString('en-GB')}</p>
+            {/* End of Report */}
+            <div className="mt-16 pt-8 border-t border-gray-400 text-center text-xs font-bold text-gray-400 uppercase tracking-widest pb-4">
+               --- End of Insight Report ---
             </div>
 
          </div>

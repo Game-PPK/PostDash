@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, ComposedChart, Line
+  PieChart, Pie, Cell, ComposedChart, Line, LabelList
 } from 'recharts';
 import { Download, FileSpreadsheet, FileText, Calendar } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
@@ -93,7 +93,10 @@ const FullReport = ({ data }) => {
       const prov = r['จังหวัด'] || 'Unknown';
       const branch = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'] || 'Unknown';
       const custType = r['customerType'] || r['ประเภทลูกค้า'] || 'Unknown';
-      const mem = r.membership && r.membership !== '-' ? r.membership : 'None';
+      
+      let memRaw = r.membership || '-';
+      let mem = (memRaw === '-' || memRaw === 'None' || memRaw.trim().toLowerCase() === 'customer') ? 'ไม่ได้เป็นสมาชิก' : memRaw;
+      
       const custName = r['ชื่อบัญชี'];
 
       if (rev <= 0 && vol <= 0) return;
@@ -178,7 +181,7 @@ const FullReport = ({ data }) => {
     if (totalRev > 0) {
       const pTopProvRev = topProv ? ((topProv.rev / totalRev)*100).toFixed(1) : 0;
       
-      para1 = `รายงานชุดนี้ดึงยอดรายได้มาทั้งหมด ${totalRev.toLocaleString('th-TH', {maximumFractionDigits:0})} บาท จากงานที่ส่งรวม ${totalVol.toLocaleString('th-TH')} ชิ้น (เฉลี่ยแล้วเราได้เงิน ${avgRev.toLocaleString('th-TH',{maximumFractionDigits:1})} บาทต่อชิ้น) ถ้าย้อนดูผลงานแต่ละเดือน จะเห็นว่า "เดือน${topMonth ? topMonth.name : 'นึง'}" เป็นช่วงที่ขายดีที่สุด กวาดเงินไปถึง ${topMonth ? topMonth.revenue.toLocaleString('th-TH',{maximumFractionDigits:0}) : 0} บาท ถือเป็นช่วงพีคที่สุดของข้อมูลชุดนี้เลยครับ`;
+      para1 = `รายงานชุดนี้ดึงยอดสะสมมาทั้งหมด ${totalRev.toLocaleString('th-TH', {maximumFractionDigits:0})} บาท จากงานที่ส่งรวม ${totalVol.toLocaleString('th-TH')} ชิ้น (เฉลี่ยแล้วรายได้ตกอยู่ที่ ${avgRev.toLocaleString('th-TH',{maximumFractionDigits:1})} บาทต่อชิ้น) ถ้าย้อนดูผลงานแต่ละเดือน จะเห็นว่า "เดือน${topMonth ? topMonth.name : 'นึง'}" เป็นช่วงที่ทำรายได้สูงที่สุด กวาดตัวเลขไปถึง ${topMonth ? topMonth.revenue.toLocaleString('th-TH',{maximumFractionDigits:0}) : 0} บาท ถือเป็นช่วงพีกที่สุดของข้อมูลชุดนี้เลยครับ`;
 
       para2 = `พอเรามาดูว่ารายได้ส่วนใหญ่มันมาจากที่ไหน ความจริงแล้ว${isBranchView && geoPieData.length > 0 ? `สาขา "${geoPieData[0].name}" เป็นตัวเดอะแบกของพื้นที่นี้เลย โดยทำยอดกินสัดส่วนถึง ${((geoPieData[0].value/totalRev)*100).toFixed(1)}% ของทั้งหมด` : `จังหวัด "${topProv ? topProv.name : ''}" เป็นหัวหอกสำคัญ นำยอดเข้ากระเป๋าถึง ${pTopProvRev}% ของรายได้ทั้งหมด`} นอกจากนี้ ลูกค้าประจำในกลุ่ม Membership ก็ยังเป็นฐานเสียงที่ชัวร์ๆ ที่คอยสร้างรายได้ให้เราอย่างสม่ำเสมอในระยะยาวครับ`;
 
@@ -313,13 +316,13 @@ const FullReport = ({ data }) => {
                <h1 className="text-2xl lg:text-3xl font-bold uppercase tracking-wide border-b-2 border-gray-900 pb-6 mb-6 inline-block w-full">
                   รายงานวิเคราะห์เชิงลึกและทิศทางธุรกิจ (Insight Report)
                </h1>
-               <table className="mx-auto text-left text-sm mt-4">
-                 <tbody>
-                    <tr><th className="pr-4 py-1 text-gray-500 font-medium">รอบเวลาข้อมูล (Period):</th><td className="font-bold">{filterMonth.length > 0 ? filterMonth.join(', ') : 'ทุกระยะ/ตลอดปี'} {filterYear.length > 0 ? filterYear.join(', ') : ''}</td></tr>
-                    <tr><th className="pr-4 py-1 text-gray-500 font-medium">ขอบเขตพื้นที่ (Region):</th><td className="font-bold">{filterProv.length > 0 ? filterProv.join(', ') : 'ภาพรวมทั่วประเทศ'}</td></tr>
-                    <tr><th className="pr-4 py-1 text-gray-500 font-medium">วันออกเอกสาร (Date):</th><td className="font-bold">{new Date().toLocaleDateString('th-TH')}</td></tr>
-                 </tbody>
-               </table>
+               <div className="flex justify-center items-center gap-6 text-sm mt-4 border-y border-gray-200 py-3 mx-auto w-max px-8 rounded-full bg-gray-50/50">
+                  <p><span className="text-gray-500 font-medium mr-2">รอบเวลา (Period):</span><span className="font-bold text-gray-900">{filterMonth.length > 0 ? filterMonth.join(', ') : 'ตลอดปี'} {filterYear.length > 0 ? filterYear.join(', ') : ''}</span></p>
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+                  <p><span className="text-gray-500 font-medium mr-2">พื้นที่ (Region):</span><span className="font-bold text-gray-900">{filterProv.length > 0 ? filterProv.join(', ') : 'ภาพรวมทั่วประเทศ'}</span></p>
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-200"></div>
+                  <p><span className="text-gray-500 font-medium mr-2">วันที่ออก (Date):</span><span className="font-bold text-gray-900">{new Date().toLocaleDateString('th-TH')}</span></p>
+               </div>
             </div>
 
             {/* Paragraph 1 */}
@@ -337,7 +340,9 @@ const FullReport = ({ data }) => {
                            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#4b5563', fontSize: 11}} />
                            <YAxis yAxisId="left" tickFormatter={val => `${(val/1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{fill: '#4b5563', fontSize: 11}} />
                            <Tooltip formatter={(val) => formatCurrency(val)} contentStyle={{ borderRadius: '0px' }} />
-                           <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#1f2937" strokeWidth={2} dot={{r: 4}} name="รายได้ (บ.)" />
+                           <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#1f2937" strokeWidth={2} dot={{r: 4}} name="รายได้ (บ.)">
+                              <LabelList dataKey="revenue" position="top" formatter={(val) => val > 0 ? (val/1000).toFixed(0)+'k' : ''} fill="#4b5563" fontSize={11} fontWeight="bold" offset={10} />
+                           </Line>
                            <Bar yAxisId="left" dataKey="volume" fill="#d1d5db" barSize={16} name="ปริมาณงาน (ชิ้น)" />
                         </ComposedChart>
                      </ResponsiveContainer>
@@ -433,7 +438,7 @@ const FullReport = ({ data }) => {
 
                   {/* Top Provinces details */}
                   <div className="w-full" style={{ pageBreakBefore: 'auto' }}>
-                     <p className="font-bold text-sm mb-2 text-gray-800">ตารางที่ 2: รหัสน้ำหนักเชิงภูมิศาสตร์ (Geographic Operations)</p>
+                     <p className="font-bold text-sm mb-2 text-gray-800">ตารางที่ 2: ข้อมูลรายได้จัดแบ่งตามพื้นที่และสาขา (Location Performance)</p>
                      <table className="w-full text-left border-collapse border border-gray-400">
                         <thead className="bg-gray-100">
                            <tr className="border-b border-gray-400">

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, startTransition, useCallback } from 'react';
 import { 
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, ReferenceLine, PieChart, Pie, Cell, Legend, ComposedChart, Treemap
 } from 'recharts';
@@ -221,7 +221,15 @@ const CustomerInfo = ({ data }) => {
   }, [customers, filterProv, filterBranch, filterCustType, filterContractEnd]);
 
   const [selectedCustNames, setSelectedCustNames] = useState([]);
-  const customerOptions = useMemo(() => filteredCustomers.map(c => ({ value: c.name, label: c.name })), [filteredCustomers]);
+  const customerOptions = useMemo(() => 
+    filteredCustomers.slice(0, 500).map(c => ({ value: c.name, label: c.name }))
+  , [filteredCustomers]);
+
+  const handleCustChange = useCallback((val) => {
+    startTransition(() => {
+      setSelectedCustNames(val || []);
+    });
+  }, []);
 
   useEffect(() => {
      if (customerOptions.length > 0) setSelectedCustNames([customerOptions[0]]);
@@ -639,9 +647,13 @@ const CustomerInfo = ({ data }) => {
               isMulti
               options={customerOptions}
               value={selectedCustNames}
-              onChange={setSelectedCustNames}
+              onChange={handleCustChange}
               className="text-base text-gray-800"
               placeholder="Search and select customers..."
+              filterOption={(option, inputValue) => {
+                if (!inputValue) return true;
+                return option.label.toLowerCase().includes(inputValue.toLowerCase());
+              }}
               styles={{
                  control: (base) => ({ ...base, borderColor: '#e5e7eb', boxShadow: 'none', borderRadius: '0.75rem', minHeight: '44px', cursor: 'pointer', ':hover': { borderColor: '#c7d2fe' } }),
                  multiValue: (base) => ({ ...base, backgroundColor: '#eef2ff', borderRadius: '8px', padding: '2px' }),

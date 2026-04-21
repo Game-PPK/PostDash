@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, ComposedChart, Line, LabelList
 } from 'recharts';
 import { Download, FileSpreadsheet, FileText, Calendar } from 'lucide-react';
-import * as htmlToImage from 'html-to-image';
+
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -90,7 +90,7 @@ const FullReport = ({ data }) => {
   }, [data, filterYear, filterProv, filterBranch]);
 
   // Calculate Insights and Formulate Narrative Paragraphs
-  const { summary, provData, geoPieData, geoTitle, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
+  const { summary, provData, geoPieData, geoTitle, isBranchView, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
     let totalRev = 0;
     let totalVol = 0;
     const pMap = {};

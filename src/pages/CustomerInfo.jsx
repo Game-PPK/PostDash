@@ -496,7 +496,7 @@ const CustomerInfo = ({ data }) => {
     const totalVol = slice.reduce((s, m) => s + m.volume, 0);
     return {
       avgRev: totalRev / slice.length,
-      avgVol: totalVol / slice.length,
+      avgVol: Math.round(totalVol / slice.length),
       monthsCount: slice.length,
     };
   }, [cust, filterYear, filterMonth]);
@@ -1139,16 +1139,52 @@ const CustomerInfo = ({ data }) => {
 
                   {/* 3-Month Average Summary Row */}
                   {avg3Months && (
-                    <div className="mt-2 grid grid-cols-[1fr_auto_auto] gap-x-3 items-center bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl px-3 py-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar size={11} className="text-purple-500 flex-shrink-0" />
-                        <span className="text-[10px] font-black text-purple-700 uppercase tracking-wider whitespace-nowrap">Avg {avg3Months.monthsCount} mo</span>
+                    <div className="relative group mt-2">
+                      <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 items-center bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl px-3 py-2.5 cursor-help">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={11} className="text-purple-500 flex-shrink-0" />
+                          <span className="text-[10px] font-black text-purple-700 uppercase tracking-wider whitespace-nowrap">Avg {avg3Months.monthsCount} mo</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs font-black text-indigo-700 leading-tight tabular-nums">{formatCurrency(avg3Months.avgRev)}</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 leading-tight tabular-nums">{formatNumberFull(avg3Months.avgVol)} pcs</span>
+                        </div>
+                        <div className="w-12 flex justify-end">
+                          {targetCriteria ? (
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md whitespace-nowrap ${
+                              avg3Months.avgVol >= targetCriteria ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-600'
+                            }`}>
+                              {avg3Months.avgVol >= targetCriteria ? '✓' : '✗'}
+                            </span>
+                          ) : <div className="w-12" />}
+                        </div>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xs font-black text-indigo-700 leading-tight tabular-nums">{formatCurrency(avg3Months.avgRev)}</span>
-                        <span className="text-[10px] font-semibold text-emerald-600 leading-tight tabular-nums">{formatNumberFull(avg3Months.avgVol)} pcs</span>
+                      {/* Hover tooltip */}
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-900 text-white text-[11px] rounded-xl px-4 py-3 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                        <p className="font-bold text-purple-300 mb-2 text-center">เปรียบเทียบกับ Performance Target</p>
+                        <div className="space-y-1.5">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">เฉลี่ย {avg3Months.monthsCount} เดือน</span>
+                            <span className="font-bold tabular-nums">{formatNumberFull(avg3Months.avgVol)} ชิ้น</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">เป้าหมาย (Target)</span>
+                            <span className="font-bold tabular-nums text-orange-300">{targetCriteria ? formatNumberFull(targetCriteria) + ' ชิ้น' : 'ไม่ได้กำหนด'}</span>
+                          </div>
+                          {targetCriteria && (
+                            <div className="border-t border-gray-700 pt-1.5 flex justify-between">
+                              <span className="text-gray-400">ส่วนต่าง</span>
+                              <span className={`font-black tabular-nums ${
+                                avg3Months.avgVol >= targetCriteria ? 'text-emerald-400' : 'text-rose-400'
+                              }`}>
+                                {avg3Months.avgVol >= targetCriteria ? '+' : ''}{formatNumberFull(avg3Months.avgVol - targetCriteria)} ชิ้น
+                                {' '}({((avg3Months.avgVol / targetCriteria) * 100).toFixed(0)}%)
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                       </div>
-                      <div className="w-12" />
                     </div>
                   )}
                 </div>

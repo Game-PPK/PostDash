@@ -206,6 +206,7 @@ const FullReport = ({ data }) => {
       provData: provArr,
       geoPieData: geoPieData,
       geoTitle: geoTitle,
+      isBranchView: isBranchView,
       membershipData: memArr,
       monthlyTrend: trendArr,
       topCustomers: topCustArr,

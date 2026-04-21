@@ -78,7 +78,7 @@ const FullReport = ({ data }) => {
   }, [data, filterYear, filterProv]);
 
   // Calculate Insights and Formulate Narrative Paragraphs
-  const { summary, provData, provPieData, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
+  const { summary, provData, geoPieData, geoTitle, membershipData, monthlyTrend, topCustomers, narratives } = useMemo(() => {
     let totalRev = 0;
     let totalVol = 0;
     const pMap = {};
@@ -142,10 +142,25 @@ const FullReport = ({ data }) => {
        return p;
     }).sort((a,b) => b.rev - a.rev);
 
-    let provPieData = provArr.slice(0, 5).map(p => ({ name: p.name, value: p.rev }));
-    if (provArr.length > 5) {
-       let otherRev = provArr.slice(5).reduce((sum, p) => sum + p.rev, 0);
-       provPieData.push({ name: 'จังหวัดอื่นๆ', value: otherRev });
+    let geoPieData = [];
+    let geoTitle = "สัดส่วนรายได้แยกตามจังหวัด";
+    let isBranchView = false;
+
+    if (provArr.length === 1) {
+       isBranchView = true;
+       geoTitle = `สัดส่วนสาขาใน ${provArr[0].name}`;
+       const branches = provArr[0].branches;
+       geoPieData = branches.slice(0, 5).map(b => ({ name: b.name, value: b.rev }));
+       if (branches.length > 5) {
+          let otherRev = branches.slice(5).reduce((sum, b) => sum + b.rev, 0);
+          geoPieData.push({ name: 'สาขาอื่นๆ', value: otherRev });
+       }
+    } else {
+       geoPieData = provArr.slice(0, 5).map(p => ({ name: p.name, value: p.rev }));
+       if (provArr.length > 5) {
+          let otherRev = provArr.slice(5).reduce((sum, p) => sum + p.rev, 0);
+          geoPieData.push({ name: 'จังหวัดอื่นๆ', value: otherRev });
+       }
     }
 
     const memArr = Object.values(mMap).sort((a,b) => b.value - a.value);
@@ -157,24 +172,25 @@ const FullReport = ({ data }) => {
     const topProv = provArr.length > 0 ? provArr[0] : null;
     const topMonth = [...trendArr].sort((a,b) => b.revenue - a.revenue)[0];
 
-    let para1 = "ระบบไม่สามารถประมวลผลคำบรรยายได้เนื่องจากไม่มีข้อมูลในขอบเขตที่เลือก";
+    let para1 = "พี่ยังไม่มีข้อมูลพอให้หนูสรุปได้เลย ลองเลือกข้อมูลใหม่ดูนะ";
     let para2 = ""; let para3 = "";
 
     if (totalRev > 0) {
       const pTopProvRev = topProv ? ((topProv.rev / totalRev)*100).toFixed(1) : 0;
       
-      para1 = `ในรอบการดำเนินงานประเมินผลนี้ ปรากฏรายได้รวมทั้งสิ้น ${totalRev.toLocaleString('th-TH', {maximumFractionDigits:0})} บาท จากปริมาณชิ้นงานที่ให้บริการรวมทั้งหมด ${totalVol.toLocaleString('th-TH')} ชิ้น โดยค่าเฉลี่ยรายได้ต่อชิ้นงานอยู่ที่ ${avgRev.toLocaleString('th-TH',{maximumFractionDigits:1})} บาทต่อชิ้น เมื่อเปรียบเทียบในแง่ของช่วงเวลาอย่างต่อเนื่อง (Annual Seasonality) พบว่าข้อมูลรายได้มีทิศทางเปลี่ยนแปลงตามช่วงเวลา โดย${topMonth ? `เดือนที่มีผลประกอบการหนาแน่นที่สุดคือ "เดือน${topMonth.name}" ซึ่งมีรายได้สูงถึง ${topMonth.revenue.toLocaleString('th-TH',{maximumFractionDigits:0})} บาท สะท้อนให้เห็นจุดสูงสุด (Peak Season) ของกรอบระยะเวลาดังกล่าว` : 'ข้อมูลการกระจายรายเดือนบ่งบอกถึงความทรงตัวของรายได้'}`;
+      para1 = `รายงานชุดนี้ดึงยอดรายได้มาทั้งหมด ${totalRev.toLocaleString('th-TH', {maximumFractionDigits:0})} บาท จากงานที่ส่งรวม ${totalVol.toLocaleString('th-TH')} ชิ้น (เฉลี่ยแล้วเราได้เงิน ${avgRev.toLocaleString('th-TH',{maximumFractionDigits:1})} บาทต่อชิ้น) ถ้าย้อนดูผลงานแต่ละเดือน จะเห็นว่า "เดือน${topMonth ? topMonth.name : 'นึง'}" เป็นช่วงที่ขายดีที่สุด กวาดเงินไปถึง ${topMonth ? topMonth.revenue.toLocaleString('th-TH',{maximumFractionDigits:0}) : 0} บาท ถือเป็นช่วงพีคที่สุดของข้อมูลชุดนี้เลยครับ`;
 
-      para2 = `เจาะลึกมิติการกระจายตัวของรายได้ตามพื้นที่การขาย พบว่าภูมิภาคจังหวัด "${topProv ? topProv.name : 'ทั่วไป'}" เป็นปัจจัยหลักสำคัญที่ขับเคลื่อนโครงสร้างองค์กร คิดเป็นสัดส่วนรายได้กว่า ${pTopProvRev}% ของเม็ดเงินรวม ในขณะเดียวกัน ระดับความภักดีของลูกค้าที่จัดเก็บผ่านแผนระบบ Membership ถือว่าเป็นตัวเสริมความมั่นคงให้กับรายได้ประจำ ซึ่งสอดคล้องกันกับการกระจายตัวและแนวร่วมการรักษายอดของระดับภูมิภาค`;
+      para2 = `พอเรามาดูว่ารายได้ส่วนใหญ่มันมาจากที่ไหน ความจริงแล้ว${isBranchView && geoPieData.length > 0 ? `สาขา "${geoPieData[0].name}" เป็นตัวเดอะแบกของพื้นที่นี้เลย โดยทำยอดกินสัดส่วนถึง ${((geoPieData[0].value/totalRev)*100).toFixed(1)}% ของทั้งหมด` : `จังหวัด "${topProv ? topProv.name : ''}" เป็นหัวหอกสำคัญ นำยอดเข้ากระเป๋าถึง ${pTopProvRev}% ของรายได้ทั้งหมด`} นอกจากนี้ ลูกค้าประจำในกลุ่ม Membership ก็ยังเป็นฐานเสียงที่ชัวร์ๆ ที่คอยสร้างรายได้ให้เราอย่างสม่ำเสมอในระยะยาวครับ`;
 
-      const topCustNames = topCustArr.slice(0,3).map(c=>c.name).join(', หรือ ');
-      para3 = `ในส่วนของพื้นที่ยุทธศาสตร์ ข้อมูลแสดงผลให้เห็นเด่นชัดว่า "${topProv ? topProv.name : 'พื้นที่หลัก'}" เป็นอาณาเขตที่มีเสถียรภาพและบริหารรายได้ให้ตกตะกอนได้สูงที่สุด โดยมีมูลค่านำโด่งถึง ${topProv?.rev.toLocaleString('th-TH',{maximumFractionDigits:0})} บาท ซึ่งความสำเร็จระดับพื้นที่นี้ สัมพันธ์โดยตรงกับกิจกรรมทางธุรกิจจากลูกค้าองค์กรรายใหญ่ (Key Accounts) ที่เป็นเส้นเลือดฝอยหล่อเลี้ยงภูมิภาคนี้ ยกตัวอย่างเช่น ${topCustNames ? topCustNames : 'ลูกค้ารายย่อยทั่วไป'} ภูมิภาคและสาขาเหล่านี้ควรได้รับการพิจารณาเพื่มทรัพยากรช่วยเหลือและรักษาสัมพันธ์อย่างเนื่องต่อไป`;
+      const topCustNames = topCustArr.slice(0,3).map(c=>c.name).join(', และ ');
+      para3 = `ในเรื่องของลูกค้าคนสำคัญ (Key Accounts) ที่เปรียบเหมือน "เส้นเลือดหลัก" เลี้ยงพื้นที่${filterProv.length>0 ? filterProv.join(' ') : 'เหล่านี้'} ก็คือกลุ่มบริษัทอย่าง ${topCustNames ? topCustNames : 'ลูกค้าหน้าร้านทั่วไป'} ลูกค้ากลุ่มนี้จะส่งของผ่านสาขาประจำเยอะและบ่อยมาก ดังนั้นการแวะไปเยี่ยมเยียนดูแลลูกค้า VIP พวกนี้ และรักษามาตรฐานสาขาที่รองรับเค้า จึงเป็นสิ่งที่ต้องโฟกัสที่สุดครับ`;
     }
 
     return { 
       summary: { totalRev, totalVol, avgRev },
       provData: provArr,
-      provPieData: provPieData,
+      geoPieData: geoPieData,
+      geoTitle: geoTitle,
       membershipData: memArr,
       monthlyTrend: trendArr,
       topCustomers: topCustArr,
@@ -337,19 +353,19 @@ const FullReport = ({ data }) => {
                {/* Figure 2: Pies */}
                <div className="my-6 flex flex-col md:flex-row justify-center items-center gap-12" style={{ pageBreakInside: 'avoid' }}>
                   <div className="w-full md:w-1/2 flex flex-col items-center">
-                     <p className="text-center font-bold text-[13px] mb-2 text-gray-700">ภาพประกอบที่ 2.1: สัดส่วนรายได้แยกตามพื้นที่ (จังหวัด)</p>
+                     <p className="text-center font-bold text-[13px] mb-2 text-gray-700">ภาพประกอบที่ 2.1: {geoTitle}</p>
                      <div className="h-48 w-full max-w-[200px]">
                         <ResponsiveContainer>
                            <PieChart>
-                              <Pie data={provPieData} cx="50%" cy="50%" innerRadius={0} outerRadius={70} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
-                                 {provPieData.map((entry, index) => <Cell key={`c-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                              <Pie data={geoPieData} cx="50%" cy="50%" innerRadius={0} outerRadius={70} dataKey="value" labelLine={false} label={renderCustomizedLabel}>
+                                 {geoPieData.map((entry, index) => <Cell key={`c-${index}`} fill={COLORS[index % COLORS.length]} />)}
                               </Pie>
                               <Tooltip formatter={(val) => formatCurrency(val)} />
                            </PieChart>
                         </ResponsiveContainer>
                      </div>
                      <div className="w-full max-w-[250px] mt-4 text-xs space-y-1">
-                        {provPieData.slice(0, 4).map((m, i) => (
+                        {geoPieData.slice(0, 4).map((m, i) => (
                            <div key={i} className="flex justify-between border-b border-gray-100 pb-1">
                               <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{backgroundColor: COLORS[i % COLORS.length]}}></div>{m.name}</span>
                               <span className="font-bold">{((m.value / summary.totalRev) * 100).toFixed(1)}%</span>

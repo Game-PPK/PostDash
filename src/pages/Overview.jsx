@@ -57,6 +57,7 @@ const Overview = ({ data }) => {
   const [trendChartType, setTrendChartType] = useState('bar');
   const [topLimit, setTopLimit] = useState(10);
   const [concentrationView, setConcentrationView] = useState('customer');
+  const [topPerformersView, setTopPerformersView] = useState('customers');
   const dashboardRef = useRef(null);
 
   // Initialize defaults
@@ -529,6 +530,25 @@ const Overview = ({ data }) => {
     return Object.values(accMap).sort((a,b) => b.revenue - a.revenue).slice(0, topLimit);
   }, [filteredData, topLimit]);
 
+  const locationPerformance = useMemo(() => {
+    const locMap = {};
+    filteredData.forEach(row => {
+      const branch = row[' ชื่อที่ทำการไปรษณีย์'] || row['ชื่อที่ทำการไปรษณีย์'];
+      const prov = row['จังหวัด'] || 'ไม่ระบุ';
+      if(!branch) return;
+      const key = `${prov}-${branch}`;
+      if (!locMap[key]) locMap[key] = { 
+        province: prov,
+        branch: branch, 
+        revenue: 0, 
+        volume: 0
+      };
+      locMap[key].revenue += row['รายได้'] || 0;
+      locMap[key].volume += row['ชิ้นงาน'] || 0;
+    });
+    return Object.values(locMap).sort((a,b) => b.revenue - a.revenue).slice(0, topLimit);
+  }, [filteredData, topLimit]);
+
   return (
     <div className="space-y-6" ref={dashboardRef}>
       <div className="flex justify-between items-center">
@@ -976,8 +996,26 @@ const Overview = ({ data }) => {
 
       {/* Top Performers Table */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-         <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
+         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div className="flex items-center gap-4">
+               <h3 className="text-lg font-semibold text-gray-800">
+                  {topPerformersView === 'customers' ? 'Top Customers' : 'Location Performance'}
+               </h3>
+               <div className="flex bg-gray-100 p-1 rounded-lg">
+                  <button 
+                     onClick={() => setTopPerformersView('customers')} 
+                     className={`text-xs px-3 py-1.5 rounded-md font-bold transition-colors ${topPerformersView === 'customers' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                     Customers
+                  </button>
+                  <button 
+                     onClick={() => setTopPerformersView('locations')} 
+                     className={`text-xs px-3 py-1.5 rounded-md font-bold transition-colors ${topPerformersView === 'locations' ? 'bg-white shadow-sm text-indigo-700' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                     Locations
+                  </button>
+               </div>
+            </div>
             <div className="flex items-center gap-2">
                <span className="text-xs text-gray-400 font-bold uppercase">Show:</span>
                <select 
@@ -985,40 +1023,63 @@ const Overview = ({ data }) => {
                   onChange={(e) => setTopLimit(parseInt(e.target.value))}
                   className="bg-gray-50 border border-gray-200 text-gray-700 text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-1.5 font-bold outline-none"
                >
-                  <option value={10}>10 รายชื่อ</option>
-                  <option value={20}>20 รายชื่อ</option>
-                  <option value={50}>50 รายชื่อ</option>
-                  <option value={100}>100 รายชื่อ</option>
+                  <option value={10}>10 รายการ</option>
+                  <option value={20}>20 รายการ</option>
+                  <option value={50}>50 รายการ</option>
+                  <option value={100}>100 รายการ</option>
                </select>
             </div>
          </div>
          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="pb-3 px-4 font-semibold text-gray-500">Customer Name</th>
-                  <th className="pb-3 px-4 font-semibold text-gray-500">Branch</th>
-                  <th className="pb-3 px-4 font-semibold text-gray-500">Service Type</th>
-                  <th className="pb-3 px-4 font-semibold text-gray-500 text-right">Volume</th>
-                  <th className="pb-3 px-4 font-semibold text-gray-500 text-right">Revenue</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topCustomers.map((c, i) => (
-                  <tr key={i} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                    <td className="py-4 px-4 font-medium text-gray-800">{c.name}</td>
-                    <td className="py-4 px-4 text-gray-600">{c.branch}</td>
-                    <td className="py-4 px-4 text-gray-600">
-                       <span className={`px-2 py-1 rounded-md text-xs font-medium ${c.type === 'ในประเทศ' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                          {c.type}
-                       </span>
-                    </td>
-                    <td className="py-4 px-4 text-right text-gray-600">{formatNumber(c.volume)}</td>
-                    <td className="py-4 px-4 text-right font-semibold text-gray-800">{formatCurrency(c.revenue)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {topPerformersView === 'customers' ? (
+               <table className="w-full text-left border-collapse">
+                 <thead>
+                   <tr className="border-b border-gray-200">
+                     <th className="pb-3 px-4 font-semibold text-gray-500">Customer Name</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500">Branch</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500">Service Type</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500 text-right">Volume</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500 text-right">Revenue</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {topCustomers.map((c, i) => (
+                     <tr key={i} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                       <td className="py-4 px-4 font-medium text-gray-800">{c.name}</td>
+                       <td className="py-4 px-4 text-gray-600">{c.branch}</td>
+                       <td className="py-4 px-4 text-gray-600">
+                          <span className={`px-2 py-1 rounded-md text-xs font-medium ${c.type === 'ในประเทศ' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                             {c.type}
+                          </span>
+                       </td>
+                       <td className="py-4 px-4 text-right text-gray-600">{formatNumber(c.volume)}</td>
+                       <td className="py-4 px-4 text-right font-semibold text-gray-800">{formatCurrency(c.revenue)}</td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+            ) : (
+               <table className="w-full text-left border-collapse">
+                 <thead>
+                   <tr className="border-b border-gray-200">
+                     <th className="pb-3 px-4 font-semibold text-gray-500">Province</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500">Branch</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500 text-right">Volume</th>
+                     <th className="pb-3 px-4 font-semibold text-gray-500 text-right">Revenue</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {locationPerformance.map((loc, i) => (
+                     <tr key={i} className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                       <td className="py-4 px-4 font-medium text-gray-800">{loc.province}</td>
+                       <td className="py-4 px-4 text-gray-600">{loc.branch}</td>
+                       <td className="py-4 px-4 text-right text-gray-600">{formatNumber(loc.volume)}</td>
+                       <td className="py-4 px-4 text-right font-semibold text-gray-800">{formatCurrency(loc.revenue)}</td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+            )}
          </div>
       </div>
     </div>

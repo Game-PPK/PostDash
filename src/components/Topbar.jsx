@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Bell, CheckSquare, Square, Calendar, LogOut, BarChart2, Package } from 'lucide-react';
+import { Bell, CheckSquare, Square, Calendar, LogOut, BarChart2, Package, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
@@ -128,6 +128,17 @@ const Topbar = ({ currentTab, setCurrentTab, data = [] }) => {
 
       {/* Right Icons */}
       <div className="flex items-center space-x-2">
+         {/* Key Account Link */}
+         <a 
+            href="https://post-keyaccount.vercel.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            title="Post Key Account"
+            className="p-2 text-gray-400 hover:text-orange-600 rounded-full hover:bg-orange-50 transition-colors"
+         >
+            <Key size={20} />
+         </a>
+
          {/* External Revenue Dashboard Link */}
          <a 
             href="https://reg6-revenue-dashboard-v2.vercel.app/" 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, X } from 'lucide-react';
+import { Check, ChevronDown, X, Search } from 'lucide-react';
 
 const MultiSelectDropdown = ({ 
   label, 
@@ -11,12 +11,14 @@ const MultiSelectDropdown = ({
   width = "w-40"
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
+        setSearchTerm('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -55,6 +57,20 @@ const MultiSelectDropdown = ({
 
       {isOpen && (
         <div className="absolute z-50 mt-1 w-56 bg-white border border-gray-100 rounded-xl shadow-xl max-h-64 overflow-y-auto p-1 animate-in fade-in zoom-in duration-200">
+          <div className="px-2 py-1.5 sticky top-0 bg-white z-10 border-b border-gray-50 mb-1">
+            <div className="relative">
+              <Search size={12} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                placeholder="Search..."
+                className="w-full text-xs pl-6 pr-2 py-1.5 bg-gray-50 border border-gray-100 rounded-md outline-none focus:border-indigo-300 focus:bg-white transition-colors"
+              />
+            </div>
+          </div>
+
           <div 
             onClick={() => toggleOption('All')}
             className="flex items-center px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg cursor-pointer transition-colors border-b border-gray-50 mb-1"
@@ -66,7 +82,7 @@ const MultiSelectDropdown = ({
           </div>
           
           <div className="space-y-0.5">
-            {options.filter(o => o !== 'All').map(opt => (
+            {options.filter(o => o !== 'All' && String(o).toLowerCase().includes(searchTerm.toLowerCase())).map(opt => (
               <div 
                 key={opt}
                 onClick={() => toggleOption(opt)}

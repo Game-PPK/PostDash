@@ -111,7 +111,7 @@ const Overview = ({ data }) => {
   };
 
   const provinces = useMemo(() => ['All', ...Array.from(new Set(data.map(r => r['จังหวัด']).filter(Boolean))).sort()], [data]);
-  const serviceTypes = useMemo(() => ['All', ...Array.from(new Set(data.map(r => r['ประเภทบริการ']).filter(Boolean))).sort()], [data]);
+  const serviceTypes = useMemo(() => ['All', ...Array.from(new Set(data.map(r => r['ชื่อบริการ'] || r['ประเภทบริการ']).filter(Boolean))).sort()], [data]);
   const branches = useMemo(() => {
      return ['All', ...Array.from(new Set(
         data.filter(r => filterProv.length === 0 || filterProv.includes(r['จังหวัด']))
@@ -137,7 +137,7 @@ const Overview = ({ data }) => {
       const mn = r['เดือน'] || r.month;
       if (filterMonth.length > 0 && !filterMonth.includes(mn)) return false;
       if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
-      if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+      if (filterType.length > 0 && !filterType.includes(r['ชื่อบริการ'] || r['ประเภทบริการ'])) return false;
       const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
       if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
       if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
@@ -215,7 +215,7 @@ const Overview = ({ data }) => {
         const mn = r['เดือน'] || r.month;
         if (filterMonth.length > 0 && !filterMonth.includes(mn)) return false;
         if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
-        if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+        if (filterType.length > 0 && !filterType.includes(r['ชื่อบริการ'] || r['ประเภทบริการ'])) return false;
         const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
         if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
         if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
@@ -271,7 +271,7 @@ const Overview = ({ data }) => {
         const mn = r['เดือน'] || r.month;
         if (y !== pYear || mn !== pMonthText) return false;
         if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return false;
-        if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return false;
+        if (filterType.length > 0 && !filterType.includes(r['ชื่อบริการ'] || r['ประเภทบริการ'])) return false;
         const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
         if (filterBranch.length > 0 && !filterBranch.includes(b)) return false;
         if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return false;
@@ -317,7 +317,7 @@ const Overview = ({ data }) => {
         if (!m || !mMap[m]) return;
         
         if (filterProv.length > 0 && !filterProv.includes(r['จังหวัด'])) return;
-        if (filterType.length > 0 && !filterType.includes(r['ประเภทบริการ'])) return;
+        if (filterType.length > 0 && !filterType.includes(r['ชื่อบริการ'] || r['ประเภทบริการ'])) return;
         const b = r[' ชื่อที่ทำการไปรษณีย์'] || r['ชื่อที่ทำการไปรษณีย์'];
         if (filterBranch.length > 0 && !filterBranch.includes(b)) return;
         if (filterMembership.length > 0 && !filterMembership.includes(r.membership)) return;

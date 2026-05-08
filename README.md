@@ -1,16 +1,41 @@
-# React + Vite
+# Customer Service Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is a React-based web application for tracking customer service metrics and reports, built with Vite.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js (v18 or higher recommended)
+- npm (Node Package Manager)
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Follow these steps to set up the project locally:
 
-## Expanding the ESLint configuration
+1. **Install Dependencies:**
+   Run the following command to install all necessary libraries:
+   ```bash
+   npm install
+   ```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+2. **Environment Variables:**
+   This project requires Firebase configuration to run.
+   - Copy the `.env.example` file and rename it to `.env`
+   - Fill in your actual Firebase keys in the newly created `.env` file.
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Start the Development Server:**
+   Run the following command to start the app locally:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:5173`.
+
+## Building for Production
+
+To build the project for production, run:
+```bash
+npm run build
+```
+The optimized files will be generated in the `dist` folder.
